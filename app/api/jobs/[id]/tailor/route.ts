@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { jobs, profile, applications } from '@/lib/schema';
 import { eq, and } from 'drizzle-orm';
-import { analyzeKeywordGap, rewriteResume } from '@/lib/claude';
+import { analyzeKeywordGap, rewriteResume, generateCoverLetter } from '@/lib/claude';
 import { uuid } from '@/lib/ids';
 import { profileToResumeText } from '@/lib/profile-formatter';
 
@@ -32,11 +32,13 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 
   let keywordGap: Awaited<ReturnType<typeof analyzeKeywordGap>>;
   let rewrite: Awaited<ReturnType<typeof rewriteResume>>;
+  let coverLetter: string;
 
   try {
-    [keywordGap, rewrite] = await Promise.all([
+    [keywordGap, rewrite, coverLetter] = await Promise.all([
       analyzeKeywordGap(resumeText, jdText),
       rewriteResume(resumeText, jdText),
+      generateCoverLetter(resumeText, job.title, job.company, jdText),
     ]);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -55,12 +57,12 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     job_id:       id,
     status:       'draft',
     resume_text:  tailoredResume,
-    cover_letter: null,
+    cover_letter: coverLetter,
     created_at:   now,
     updated_at:   now,
   });
 
   const [application] = await db.select().from(applications).where(eq(applications.job_id, id));
 
-  return NextResponse.json({ application, keywordGap, rewrite });
+  return NextResponse.json({ application, keywordGap, rewrite, coverLetter });
 }

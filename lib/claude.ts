@@ -132,6 +132,44 @@ Include every major section that was meaningfully changed. Sections with no impr
   return extractJSON(content) as RewriteResult;
 }
 
+export async function generateCoverLetter(
+  profileText: string,
+  jobTitle: string,
+  company: string,
+  jdText: string
+): Promise<string> {
+  const msg = await client().chat.completions.create({
+    model: MODEL,
+    temperature: 0.4,
+    max_tokens: 700,
+    messages: [
+      {
+        role: 'system',
+        content:
+          'You are a professional cover letter writer. Write targeted, concise cover letters in plain text. 3-4 paragraphs, under 350 words. No salutation header, no "Dear Hiring Manager" line. Start directly with the opening paragraph.',
+      },
+      {
+        role: 'user',
+        content: `Write a cover letter for the following candidate applying to this role.
+
+CANDIDATE PROFILE:
+${profileText}
+
+ROLE: ${jobTitle} at ${company}
+
+JOB DESCRIPTION:
+${jdText}
+
+Write the cover letter now. Plain text only, no markdown, no headers.`,
+      },
+    ],
+  });
+
+  const content = msg.choices[0].message.content;
+  if (!content) throw new Error('Empty model response for cover letter');
+  return content.trim();
+}
+
 export interface ScoreResult {
   score: number;
   grade: 'A' | 'B' | 'C' | 'D' | 'F';

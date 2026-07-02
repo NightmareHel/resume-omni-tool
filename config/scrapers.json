@@ -1,0 +1,165 @@
+{
+  "targets": [
+    {
+      "source": "greenhouse",
+      "company": "Anthropic",
+      "slug": "anthropic",
+      "titleFilter": ["engineer", "developer", "software", "ai", "ml", "scientist", "backend", "fullstack"],
+      "locationFilter": ["new york", "new jersey", "philadelphia", "boston"]
+    },
+    {
+      "source": "greenhouse",
+      "company": "OpenAI",
+      "slug": "openai",
+      "titleFilter": ["engineer", "developer", "software", "ai", "ml", "scientist", "backend", "fullstack"],
+      "locationFilter": ["new york", "new jersey", "philadelphia", "boston"]
+    },
+    {
+      "source": "ashby",
+      "company": "Perplexity",
+      "slug": "perplexity-ai",
+      "titleFilter": ["engineer", "developer", "software", "ai", "ml", "scientist", "backend", "fullstack"],
+      "locationFilter": ["new york", "new jersey", "philadelphia", "boston"]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Databricks",
+      "slug": "databricks",
+      "titleFilter": ["engineer", "developer", "software", "ai", "ml", "scientist", "backend", "fullstack"],
+      "locationFilter": ["new york", "new jersey", "philadelphia", "boston"]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Weights & Biases",
+      "slug": "wandb",
+      "titleFilter": ["engineer", "developer", "software", "ai", "ml", "scientist", "backend", "fullstack"],
+      "locationFilter": ["new york", "new jersey", "philadelphia", "boston"]
+    },
+    {
+      "source": "lever",
+      "company": "Cohere",
+      "slug": "cohere",
+      "titleFilter": ["engineer", "developer", "software", "ai", "ml", "scientist", "backend", "fullstack"],
+      "locationFilter": ["new york", "new jersey", "philadelphia", "boston"]
+    },
+    {
+      "source": "lever",
+      "company": "Scale AI",
+      "slug": "scaleai",
+      "titleFilter": ["engineer", "developer", "software", "ai", "ml", "scientist", "backend", "fullstack"],
+      "locationFilter": ["new york", "new jersey", "philadelphia", "boston"]
+    },
+    {
+      "source": "lever",
+      "company": "Hugging Face",
+      "slug": "huggingface",
+      "titleFilter": ["engineer", "developer", "software", "ai", "ml", "scientist", "backend", "fullstack"],
+      "locationFilter": ["new york", "new jersey", "philadelphia", "boston"]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Palantir",
+      "slug": "palantir",
+      "titleFilter": ["engineer", "developer", "software", "ai", "ml", "scientist", "backend", "fullstack", "analyst"],
+      "locationFilter": ["new york", "new jersey", "philadelphia", "boston", "washington"]
+    },
+    {
+      "source": "greenhouse",
+      "company": "MongoDB",
+      "slug": "mongodb",
+      "titleFilter": ["engineer", "developer", "software", "ai", "ml", "scientist", "backend", "fullstack"],
+      "locationFilter": ["new york", "new jersey", "philadelphia", "boston"]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Snowflake",
+      "slug": "snowflake",
+      "titleFilter": ["engineer", "developer", "software", "ai", "ml", "scientist", "backend", "fullstack"],
+      "locationFilter": ["new york", "new jersey", "philadelphia", "boston"]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Stripe",
+      "slug": "stripe",
+      "titleFilter": ["engineer", "developer", "software", "ai", "ml", "scientist", "backend", "fullstack"],
+      "locationFilter": ["new york", "new jersey", "philadelphia", "boston"]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Figma",
+      "slug": "figma",
+      "titleFilter": ["engineer", "developer", "software", "ai", "ml", "scientist", "backend", "fullstack"],
+      "locationFilter": ["new york", "new jersey", "philadelphia", "boston"]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Ramp",
+      "slug": "rampfinancial",
+      "titleFilter": ["engineer", "developer", "software", "ai", "ml", "scientist", "backend", "fullstack"],
+      "locationFilter": ["new york", "new jersey", "philadelphia", "boston"]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Brex",
+      "slug": "brex",
+      "titleFilter": ["engineer", "developer", "software", "ai", "ml", "scientist", "backend", "fullstack"],
+      "locationFilter": ["new york", "new jersey", "philadelphia", "boston"]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Cockroach Labs",
+      "slug": "cockroachlabs",
+      "titleFilter": ["engineer", "developer", "software", "ai", "ml", "scientist", "backend", "fullstack"],
+      "locationFilter": ["new york", "new jersey", "philadelphia", "boston"]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Notion",
+      "slug": "notion",
+      "titleFilter": ["engineer", "developer", "software", "ai", "ml", "scientist", "backend", "fullstack"],
+      "locationFilter": ["new york", "new jersey", "philadelphia", "boston"]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Duolingo",
+      "slug": "duolingo",
+      "titleFilter": ["engineer", "developer", "software", "ai", "ml", "scientist", "backend", "fullstack"],
+      "locationFilter": ["new york", "new jersey", "philadelphia", "pittsburgh", "boston"]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Benchling",
+      "slug": "benchling",
+      "titleFilter": ["engineer", "developer", "software", "ai", "ml", "scientist", "backend", "fullstack"],
+      "locationFilter": ["new york", "new jersey", "philadelphia", "boston"]
+    },
+    {
+      "source": "ashby",
+      "company": "Linear",
+      "slug": "linear",
+      "titleFilter": ["engineer", "developer", "software", "ai", "ml", "scientist", "backend", "fullstack"],
+      "locationFilter": ["new york", "new jersey", "philadelphia", "boston"]
+    },
+    {
+      "source": "ashby",
+      "company": "Vercel",
+      "slug": "vercel",
+      "titleFilter": ["engineer", "developer", "software", "ai", "ml", "scientist", "backend", "fullstack"],
+      "locationFilter": ["new york", "new jersey", "philadelphia", "boston"]
+    },
+    {
+      "source": "ashby",
+      "company": "Replit",
+      "slug": "replit",
+      "titleFilter": ["engineer", "developer", "software", "ai", "ml", "scientist", "backend", "fullstack"],
+      "locationFilter": ["new york", "new jersey", "philadelphia", "boston"]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Anduril Industries",
+      "slug": "andurilindustries",
+      "titleFilter": ["engineer", "developer", "software", "ai", "ml", "scientist", "backend", "fullstack"],
+      "locationFilter": ["new york", "new jersey", "philadelphia", "boston", "washington", "virginia", "maryland"]
+    }
+  ]
+}

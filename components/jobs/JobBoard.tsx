@@ -21,7 +21,7 @@ interface Job {
 }
 
 interface Props {
-  onTailor?: (jobId: string) => void;
+  onTailor?: (jobId: string, onProgress?: (label: string) => void) => void | Promise<void>;
 }
 
 export default function JobBoard({ onTailor }: Props) {
@@ -32,6 +32,7 @@ export default function JobBoard({ onTailor }: Props) {
   const [scraping, setScraping] = useState(false);
   const [scoringId, setScoringId] = useState<string | null>(null);
   const [tailoringId, setTailoringId] = useState<string | null>(null);
+  const [tailorLabel, setTailorLabel] = useState<string | null>(null);
   const [filters, setFilters] = useState<JobFiltersState>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -139,8 +140,10 @@ export default function JobBoard({ onTailor }: Props) {
   const handleTailorInternal = async (id: string) => {
     if (!onTailor) return;
     setTailoringId(id);
-    await onTailor(id);
+    setTailorLabel(null);
+    await onTailor(id, setTailorLabel);
     setTailoringId(null);
+    setTailorLabel(null);
   };
 
   return (
@@ -185,6 +188,7 @@ export default function JobBoard({ onTailor }: Props) {
               onTailor={onTailor ? () => handleTailorInternal(job.id) : () => {}}
               scoring={scoringId === job.id}
               tailoring={tailoringId === job.id}
+              tailoringLabel={tailoringId === job.id ? tailorLabel ?? undefined : undefined}
             />
           ))}
         </div>

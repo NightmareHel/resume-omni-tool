@@ -30,39 +30,71 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   const resumeText = profileToResumeText(prof);
   const jdText = job.description ?? `${job.title} at ${job.company}`;
 
-  let keywordGap: Awaited<ReturnType<typeof analyzeKeywordGap>>;
-  let rewrite: Awaited<ReturnType<typeof rewriteResume>>;
-  let coverLetter: string;
+  // SSE stream: stage events as each AI call completes, live cover letter
+  // tokens, then a final `done` event carrying the same payload the old
+  // JSON response had. Pre-check failures above still return plain JSON.
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      // Swallow enqueue failures so a client disconnect mid-stream doesn't
+      // abort the AI calls or the DB insert — the draft still gets saved.
+      const send = (obj: unknown) => {
+        try {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
+        } catch {}
+      };
 
-  try {
-    [keywordGap, rewrite, coverLetter] = await Promise.all([
-      analyzeKeywordGap(resumeText, jdText),
-      rewriteResume(resumeText, jdText),
-      generateCoverLetter(resumeText, job.title, job.company, jdText),
-    ]);
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[tailor] Groq error:', msg);
-    return NextResponse.json(
-      { error: `AI rewrite failed: ${msg}` },
-      { status: 502 }
-    );
-  }
+      try {
+        const [keywordGap, rewrite, coverLetter] = await Promise.all([
+          analyzeKeywordGap(resumeText, jdText).then((r) => {
+            send({ type: 'stage', stage: 'gap', status: 'done' });
+            return r;
+          }),
+          rewriteResume(resumeText, jdText).then((r) => {
+            send({ type: 'stage', stage: 'rewrite', status: 'done' });
+            return r;
+          }),
+          generateCoverLetter(resumeText, job.title, job.company, jdText, (text) =>
+            send({ type: 'cover_delta', text })
+          ).then((r) => {
+            send({ type: 'stage', stage: 'cover', status: 'done' });
+            return r;
+          }),
+        ]);
 
-  const tailoredResume = rewrite.sections.map((s) => `${s.name.toUpperCase()}\n${s.rewritten}`).join('\n\n');
-  const now = new Date().toISOString();
+        const tailoredResume = rewrite.sections.map((s) => `${s.name.toUpperCase()}\n${s.rewritten}`).join('\n\n');
+        const now = new Date().toISOString();
 
-  await db.insert(applications).values({
-    id:           uuid(),
-    job_id:       id,
-    status:       'draft',
-    resume_text:  tailoredResume,
-    cover_letter: coverLetter,
-    created_at:   now,
-    updated_at:   now,
+        await db.insert(applications).values({
+          id:           uuid(),
+          job_id:       id,
+          status:       'draft',
+          resume_text:  tailoredResume,
+          cover_letter: coverLetter,
+          created_at:   now,
+          updated_at:   now,
+        });
+
+        const [application] = await db.select().from(applications).where(eq(applications.job_id, id));
+
+        send({ type: 'done', application, keywordGap, rewrite, coverLetter });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error('[tailor] AI error:', msg);
+        send({ type: 'error', error: `AI rewrite failed: ${msg}` });
+      } finally {
+        try {
+          controller.close();
+        } catch {}
+      }
+    },
   });
 
-  const [application] = await db.select().from(applications).where(eq(applications.job_id, id));
-
-  return NextResponse.json({ application, keywordGap, rewrite, coverLetter });
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    },
+  });
 }

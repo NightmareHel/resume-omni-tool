@@ -136,13 +136,10 @@ export async function generateCoverLetter(
   profileText: string,
   jobTitle: string,
   company: string,
-  jdText: string
+  jdText: string,
+  onDelta?: (text: string) => void
 ): Promise<string> {
-  const msg = await client().chat.completions.create({
-    model: MODEL,
-    temperature: 0.4,
-    max_tokens: 700,
-    messages: [
+  const messages = [
       {
         role: 'system',
         content:
@@ -162,7 +159,33 @@ ${jdText}
 
 Write the cover letter now. Plain text only, no markdown, no headers.`,
       },
-    ],
+    ] as const;
+
+  if (onDelta) {
+    const stream = await client().chat.completions.create({
+      model: MODEL,
+      temperature: 0.4,
+      max_tokens: 700,
+      stream: true,
+      messages: [...messages],
+    });
+    let full = '';
+    for await (const chunk of stream) {
+      const delta = chunk.choices[0]?.delta?.content ?? '';
+      if (delta) {
+        full += delta;
+        onDelta(delta);
+      }
+    }
+    if (!full) throw new Error('Empty model response for cover letter');
+    return full.trim();
+  }
+
+  const msg = await client().chat.completions.create({
+    model: MODEL,
+    temperature: 0.4,
+    max_tokens: 700,
+    messages: [...messages],
   });
 
   const content = msg.choices[0].message.content;

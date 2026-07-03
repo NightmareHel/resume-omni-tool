@@ -24,6 +24,7 @@ interface Props {
   onTailor: (id: string) => void;
   scoring?: boolean;
   tailoring?: boolean;
+  tailoringLabel?: string;
 }
 
 function ScoreBadge({ score, grade }: { score: number | null; grade: string | null }) {
@@ -60,7 +61,7 @@ const SOURCE_LABELS: Record<string, string> = {
   custom:     'CX',
 };
 
-export default function JobCard({ job, onStatusChange, onScore, onTailor, scoring, tailoring }: Props) {
+export default function JobCard({ job, onStatusChange, onScore, onTailor, scoring, tailoring, tailoringLabel }: Props) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -112,7 +113,7 @@ export default function JobCard({ job, onStatusChange, onScore, onTailor, scorin
           disabled={tailoring}
           className="text-xs bg-emerald-700 hover:bg-emerald-600 text-white px-2 py-1 rounded disabled:opacity-50"
         >
-          {tailoring ? 'Tailoring...' : 'Tailor'}
+          {tailoring ? tailoringLabel ?? 'Tailoring...' : 'Tailor'}
         </button>
         <button
           onClick={() => setOpen((o) => !o)}

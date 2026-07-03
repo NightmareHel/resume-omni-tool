@@ -1,6 +1,6 @@
 # JobPilot — Session Context & Roadmap
 
-*Last updated: 2026-07-02 (Session 3)*
+*Last updated: 2026-07-03 (Session 4)*
 
 This file exists so any future session can pick up exactly where we left off without re-reading the entire codebase. It covers what was built, what works, what is broken, the full gap list, and the roadmap to production.
 
@@ -135,7 +135,7 @@ resume-omni-tool/
 | GET | `/api/jobs` | List jobs (filter: source, status, minScore, search, excludeCustom; sort: scraped_at, score_desc, score_asc; paginated) |
 | GET | `/api/jobs/[id]` | Single job |
 | PATCH | `/api/jobs/[id]` | Update job status |
-| POST | `/api/jobs/[id]/tailor` | AI tailor resume + generate cover letter + create draft application |
+| POST | `/api/jobs/[id]/tailor` | AI tailor resume + cover letter + draft application. **Returns SSE stream** (Session 4): `stage` / `cover_delta` / `done` / `error` events. Pre-check failures (404/400/409) still return plain JSON. |
 | **POST** | **`/api/jobs/import`** | **NEW: Playwright-fetch a URL, extract title/company/description, store as source=custom** |
 | GET | `/api/applications` | List applications |
 | POST | `/api/applications` | Create manual draft |
@@ -155,31 +155,30 @@ All use Groq llama-3.3-70b-versatile. JSON extracted via regex from model output
 - `analyzeKeywordGap(resumeText, jdText)` → `{ mustHave, niceToHave, found, missing, suggested, score }`
 - `rewriteResume(resumeText, jdText)` → `{ sections: [{ name, original, rewritten, changes }], summary }`
 - `scoreJob(profileText, jobDescription)` → `{ score: 0-100, grade: A-F, summary: string }`
-- **`generateCoverLetter(profileText, jobTitle, company, jdText)`** → `string` (plain text, 3-4 paragraphs, ~300 words). System+user message pattern. temp=0.4, max_tokens=700. Added Session 3.
+- **`generateCoverLetter(profileText, jobTitle, company, jdText, onDelta?)`** → `string` (plain text, 3-4 paragraphs, ~300 words). System+user message pattern. temp=0.4, max_tokens=700. Added Session 3. When `onDelta` is provided the Groq call streams and forwards each token to the callback (used by the tailor SSE route, Session 4).
 
 ---
 
 ## Scraper Targets (config/scrapers.json)
 
-23 companies configured. All filter to eng/AI titles, tri-state + remote locations.
+22 companies configured. All filter to eng/AI titles, tri-state + remote locations.
+
+**Session 4 (2026-07-03): a wave of ATS migrations broke 11 targets — all slugs re-verified against live APIs and fixed.** Current mapping:
 
 | Company | ATS |
 |---|---|
-| Anthropic, OpenAI, Databricks, W&B, Palantir, MongoDB, ~~Snowflake~~, Stripe, Figma, ~~Ramp~~, Brex, Cockroach Labs, Notion, Duolingo, Benchling, Anduril | Greenhouse |
-| Cohere, Scale AI, Hugging Face | Lever |
-| ~~Perplexity~~, Linear, Vercel, Replit | Ashby |
+| Anthropic, Databricks, MongoDB, Stripe, Figma, Brex, Cockroach Labs, Duolingo, Anduril, Scale AI (`scaleai`), CoreWeave (`coreweave` — absorbed Weights & Biases after acquisition) | Greenhouse |
+| Palantir (`palantir`) | Lever |
+| OpenAI, Cohere, Benchling, Notion, Ramp, Snowflake, Perplexity, Linear, Vercel, Replit | Ashby |
 
-**Known broken slugs (return 404 — need fixing):**
-- Ramp: `rampfinancial` → try `ramp` or check current Greenhouse slug
-- Snowflake: `snowflake` → verify on boards-api.greenhouse.io
-- Perplexity: `perplexity-ai` → verify on Ashby (may have moved ATS)
+**Removed:** Hugging Face — migrated to Workable, which JobPilot has no scraper for. Re-add if a Workable scraper is ever built (`https://apply.workable.com/api/v1/widget/accounts/huggingface` confirmed live).
 
 Location filter: new york, new jersey, philadelphia, boston (remote auto-passes).
 Title include filter: engineer, developer, software, ai, ml, scientist, backend, fullstack.
 
 **Seniority exclusion filter (NEW — Session 3):** `matchesTitleFilter()` in `lib/scrapers/_http.ts` rejects any title containing: `senior`, `sr.`, `staff`, `principal`, `lead`, `manager`, `director`, `head`, `vp`, `vice president`, `architect`, `distinguished`, `intern`, `co-op`. Applied globally in all 4 scrapers before the include filter.
 
-**Current DB state:** Fresh scrape performed 2026-07-02 after full wipe. 233 clean jobs (all pass seniority exclusion filter). Old jobs with senior titles have been purged.
+**Current DB state:** 648 jobs after the Session 4 slug fixes and re-scrape (2026-07-03). All 20 contributing sources clean, zero 404s. Top contributors: OpenAI (178), Anduril (91), Palantir (82), Anthropic (50).
 
 ---
 
@@ -230,6 +229,8 @@ Title include filter: engineer, developer, software, ai, ml, scientist, backend,
 - Resume tailoring per job: AI generates tailored resume text AND cover letter in parallel, creates draft application
 - PDF generation from tailored resume text (Playwright headless, ATS-safe template)
 - **Apply worker functional for Greenhouse, Lever, Ashby**: PDF upload, correct form selectors, custom question detection → manual_required
+- **Streaming tailor (Session 4):** tailor endpoint returns SSE; job cards show live progress ("Tailoring 1/3...") while the three AI calls run; cover letter tokens stream as `cover_delta` events (UI rendering of live text not built yet — events are available)
+- **My Jobs import fixed (Session 4):** root cause was missing Playwright browser binaries on the dev machine (`npx playwright install chromium`) plus `chromium.launch()` outside the try/catch turning launch failures into raw 500s
 - Tailor loading state, scrape polling with completion toast, global toast system
 - Pipeline kanban (9 columns, status transitions enforced by state machine, notes, resume preview)
 - All error paths are guarded (API routes return proper JSON errors, client uses defensive `.catch()`)
@@ -249,8 +250,8 @@ Title include filter: engineer, developer, software, ai, ml, scientist, backend,
 **2. /api/applications/[id]/submit is a no-op**
 It validates status but does not update the DB or trigger anything. The apply worker picks up `pending` items on its own 2-minute poll. The "Approve & Queue" button in the UI works correctly (calls PATCH to move status to `pending` first), but the subsequent submit call does nothing useful.
 
-**3. Three broken scraper slugs**
-Ramp (`rampfinancial`), Snowflake (`snowflake`), Perplexity (`perplexity-ai`) all return 404 during scrape. These companies return no jobs. Need to find correct slugs and update `config/scrapers.json`.
+**3. ~~Three broken scraper slugs~~ FIXED (Session 4)**
+All broken slugs (which had grown to 11 after an ATS migration wave) were re-verified against live APIs and fixed in `config/scrapers.json`. Hugging Face removed (moved to Workable — unsupported).
 
 ### Non-Critical (UX / data gaps)
 
@@ -296,9 +297,8 @@ The project has `scripts/setup-mac-mini.sh` for one-shot setup.
 6. Access via local IP or Tailscale for remote access from laptop
 
 **What you need before going live:**
-- Fix 3 broken scraper slugs (Ramp, Snowflake, Perplexity)
+- ~~Fix broken scraper slugs~~ Done (Session 4)
 - Decide on email sync approach (MCP session vs. standalone OAuth)
-- Verify Lever slugs for Scale AI and Hugging Face return real results
 
 ---
 
@@ -329,8 +329,8 @@ The project has `scripts/setup-mac-mini.sh` for one-shot setup.
 - [ ] Add token usage logging
 
 ### Phase 4 — Expand job sources
-- [ ] Fix broken slugs: Ramp, Snowflake, Perplexity
-- [ ] Verify Lever slugs for Scale AI (scaleai) and Hugging Face (huggingface)
+- [x] Fix broken slugs — all 11 dead targets re-verified and fixed, HF removed (Session 4)
+- [ ] Optional: Workable scraper to re-add Hugging Face
 - [ ] Add more NYC/remote AI companies as scraper targets
 - [ ] Add "remote only" filter option to job board UI
 
@@ -472,3 +472,27 @@ No other secrets. Gmail auth not yet wired.
 - `7402f06` — Phase 1: make auto-apply functional (7 files, 405 insertions)
 - `7344c7f` — Scrapers: exclude senior/lead/staff/architect/intern titles (5 files)
 - `b74b818` — Add My Jobs section: manual URL import with Playwright extraction (5 files)
+
+### Session 4 — Import bug fix, ATS migration wave, streaming tailor (2026-07-03)
+
+**Decision:** Phase 3 (Anthropic swap) deferred by Sid. AI layer stays on Groq/Llama. Streaming was pulled forward and shipped on the Groq backend.
+
+**My Jobs import 500 fixed:**
+- Root cause: Playwright browser binaries were never installed on the dev laptop (`browserType.launch: Executable doesn't exist`). Fixed with `npx playwright install chromium`. The Mac Mini setup script already handles this (line 21).
+- `app/api/jobs/import/route.ts`: `chromium.launch()` moved inside the try/catch (launch failures now return the clean 400 path); null guard added after the post-insert select.
+- Known cosmetic gap: Ashby job pages title as "Role @ Company" — the parser has no `@` split, so `company` comes back empty on those imports. Add an `@`-split heuristic to `parseJobMeta` if it bothers.
+
+**ATS migration wave — 11 dead targets fixed (config-only):**
+- To Ashby: Ramp (`ramp`), Snowflake (`snowflake`), Perplexity (`perplexity`), OpenAI (`openai`), Cohere (`cohere`), Benchling (`benchling`), Notion (`notion`)
+- To Lever: Palantir (`palantir`)
+- To Greenhouse: Scale AI (`scaleai`); Weights & Biases replaced by CoreWeave (`coreweave`) post-acquisition
+- Removed: Hugging Face (moved to Workable — no scraper for it)
+- Re-scrape: 648 total jobs, zero 404s across all 20 contributing sources.
+
+**Streaming tailor endpoint:**
+- `lib/claude.ts`: `generateCoverLetter` gained optional `onDelta` callback; when present the Groq call runs with `stream: true` and forwards tokens.
+- `app/api/jobs/[id]/tailor/route.ts`: response is now `text/event-stream`. Events: `stage` (per AI call completion), `cover_delta` (cover letter tokens), `done` (full payload after DB insert), `error`. Pre-checks (404/400/409) still return plain JSON before the stream starts. `send` swallows enqueue failures so a client disconnect mid-stream doesn't kill the AI calls or the insert — the draft still lands.
+- `app/jobs/page.tsx`: `handleTailor` consumes the SSE body via `getReader()`, reports progress through an `onProgress` callback, routes to pipeline on `done`.
+- `components/jobs/JobBoard.tsx` + `ManualJobsSection.tsx`: track a `tailorLabel` state fed by `onProgress`, passed to `JobCard` as `tailoringLabel` — button shows "Tailoring 1/3..." → "3/3" live.
+- `components/jobs/JobCard.tsx`: new optional `tailoringLabel` prop.
+- Verified end-to-end: 386 `cover_delta` events, 3 `stage` events, 1 `done`; draft application created with resume + cover letter; repeat tailor returns 409 JSON; resume PDF endpoint confirmed working after the chromium install.

@@ -71,6 +71,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
           status:       'draft',
           resume_text:  tailoredResume,
           cover_letter: coverLetter,
+          keyword_gap:  JSON.stringify(keywordGap),
           created_at:   now,
           updated_at:   now,
         });

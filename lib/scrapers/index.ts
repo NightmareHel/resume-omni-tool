@@ -7,6 +7,7 @@ import { scrapeLever } from './lever';
 import { scrapeAshby } from './ashby';
 import { scrapeWorkday } from './workday';
 import type { RawJob } from './greenhouse';
+import { classifyJob } from '../classify-job';
 
 export interface ScraperTarget {
   source: 'greenhouse' | 'lever' | 'ashby' | 'workday';
@@ -71,6 +72,7 @@ export async function scrapeAll(config: ScrapeConfig, existingRunId?: string): P
 
     for (const job of allResults) {
       const id = jobId(job.source, job.external_id);
+      const cls = await classifyJob(job.title, job.company, job.description);
       try {
         await db.insert(jobs).values({
           id,
@@ -85,6 +87,12 @@ export async function scrapeAll(config: ScrapeConfig, existingRunId?: string): P
           posted_at:   job.posted_at ?? undefined,
           scraped_at,
           status:      'new',
+          sponsor_status:    cls.sponsor_status,
+          sponsor_evidence:  cls.sponsor_evidence,
+          sponsor_lca_count: cls.sponsor_lca_count,
+          years_required:    cls.years_required,
+          entry_level:       cls.entry_level,
+          everify:           cls.everify,
         });
         jobsNew++;
       } catch {

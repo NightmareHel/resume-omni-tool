@@ -20,6 +20,13 @@ export const jobs = sqliteTable(
     fit_grade:   text('fit_grade'),
     fit_summary: text('fit_summary'),
     status:      text('status').default('new').notNull(),
+    // Sponsorship + seniority classification (computed at scrape time)
+    sponsor_status:    text('sponsor_status'),   // blocked | confirmed | likely | possible | unlikely | unknown
+    sponsor_evidence:  text('sponsor_evidence'), // verbatim JD phrase that triggered the verdict
+    sponsor_lca_count: integer('sponsor_lca_count'),
+    years_required:    integer('years_required'),
+    entry_level:       integer('entry_level'),   // 1 = entry, 0 = not, null = undetermined
+    everify:           integer('everify'),       // 1 = E-Verify mentioned in JD
   },
   (t) => [uniqueIndex('jobs_source_external_id').on(t.source, t.external_id)]
 );
@@ -35,9 +42,27 @@ export const applications = sqliteTable('applications', {
   form_data:         text('form_data'),
   screenshot_path:   text('screenshot_path'),
   notes:             text('notes'),
+  keyword_gap:       text('keyword_gap'), // JSON KeywordGapResult from tailor
   created_at:        text('created_at').notNull(),
   updated_at:        text('updated_at').notNull(),
 });
+
+// Aggregated H-1B filing history per employer, from DOL LCA disclosure
+// files (primary, current) and USCIS Data Hub CSVs (backfill).
+export const sponsor_history = sqliteTable(
+  'sponsor_history',
+  {
+    employer_norm:  text('employer_norm').notNull(),
+    employer_raw:   text('employer_raw').notNull(),
+    fy:             integer('fy').notNull(),
+    total_lcas:     integer('total_lcas').default(0).notNull(),
+    new_employment: integer('new_employment').default(0),
+    tech_lcas:      integer('tech_lcas').default(0),
+    median_wage:    integer('median_wage'),
+    source:         text('source').notNull(), // 'dol' | 'uscis'
+  },
+  (t) => [uniqueIndex('sponsor_history_employer_fy').on(t.employer_norm, t.fy, t.source)]
+);
 
 export const profile = sqliteTable('profile', {
   id:                text('id').primaryKey(),

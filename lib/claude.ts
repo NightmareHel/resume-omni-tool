@@ -197,6 +197,8 @@ export interface ScoreResult {
   score: number;
   grade: 'A' | 'B' | 'C' | 'D' | 'F';
   summary: string;
+  sponsorship: 'yes' | 'no' | 'unclear';
+  seniority: 'entry' | 'mid' | 'senior';
 }
 
 export async function scoreJob(profileText: string, jobDescription: string): Promise<ScoreResult> {
@@ -218,13 +220,17 @@ Return ONLY valid JSON:
 {
   "score": 78,
   "grade": "B",
-  "summary": "One sentence on fit and main gap."
+  "summary": "One sentence on fit and main gap.",
+  "sponsorship": "yes" | "no" | "unclear",
+  "seniority": "entry" | "mid" | "senior"
 }
 
 Rules:
 - score 0-100: 100 means perfect match on skills, experience level, and location
 - grade: A (90+), B (75-89), C (60-74), D (45-59), F (<45)
-- summary: maximum 20 words, specific — mention the strongest match and the biggest gap`,
+- summary: maximum 20 words, specific — mention the strongest match and the biggest gap
+- sponsorship: "no" ONLY if the description explicitly refuses visa sponsorship or requires US citizenship / clearance / permanent work authorization; "yes" if it explicitly offers sponsorship; otherwise "unclear". "Must be authorized to work in the US" alone is "unclear" (OPT satisfies it).
+- seniority: "entry" for 0-2 years / new grad roles, "senior" for 5+ years or lead/staff scope, else "mid"`,
       },
     ],
   });

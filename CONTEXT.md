@@ -525,3 +525,37 @@ No other secrets. Gmail auth not yet wired.
 - **Phase C — Application review workspace:** PATCH resume_text/cover_letter + DELETE + re-tailor + cover.pdf + AI critique endpoints; `/pipeline/[id]` detail page with embedded PDF preview, editors, keyword-gap panel, critique, status controls. Keyword gap is already persisted (done in A).
 - **Phase D — Dashboard + redesign:** home becomes command center (funnel, velocity, sponsorship breakdown, action queue); resume wizard moves to /resume; sponsorship badges + filter toggles on jobs page; taste-skill `redesign-skill` (clone in session scratchpad, or re-fetch github.com/Leonxlnx/taste-skill) copied to `.claude/skills/redesign-existing-projects/` + ~40-line docs/DESIGN-RULES.md; `motion` npm dependency for kanban layoutId animations.
 - Reminder: Next.js 16 has breaking changes — read `node_modules/next/dist/docs/` before writing route/page code (per AGENTS.md).
+
+### Session 6 — JobPilot v2 Phases C+D: review workspace + dashboard redesign (2026-07-07)
+
+**Phase C — Application review workspace (commit e4c98b3):**
+- `lib/claude.ts`: added `critiqueApplication(resumeText, jdText)` returning `{ ats_score, issues[{severity, issue, fix}], verdict }`.
+- `lib/resume-pdf.ts`: added `generateCoverLetterPDF(coverText, profile)` — Playwright cover letter renderer with letter margins (1in), Arial 11pt, justified paragraphs.
+- `app/api/applications/[id]/route.ts`: PATCH now also accepts `resume_text` and `cover_letter` updates (no state machine enforcement — text edits are always allowed on any status). DELETE added: only permitted on draft or terminal statuses (rejected/withdrawn/manual_required), returns 400 otherwise.
+- `app/api/applications/[id]/retailor/route.ts` (NEW): POST SSE endpoint. Draft-only guard. Runs same 3-call parallel AI flow as tailor (gap + rewrite + cover letter), then UPDATE (not insert) the application row with new resume_text/cover_letter/keyword_gap. Streams same event structure: stage / cover_delta / done / error.
+- `app/api/applications/[id]/cover.pdf/route.ts` (NEW): GET endpoint. Renders cover_letter via generateCoverLetterPDF, streams PDF inline.
+- `app/api/applications/[id]/critique/route.ts` (NEW): POST endpoint. Fetches app + job, calls critiqueApplication, returns JSON.
+- `app/pipeline/[id]/page.tsx` (NEW): full review workspace. Left column: PDF iframe (double-bezel container) with resume/cover toggle and download button; cache-busted on save or re-tailor. Right column: 4 tabs — Resume editor (textarea + save + re-tailor), Cover editor (textarea + save), Quality (keyword gap chips + critique runner with severity-colored issue list), Activity (status transitions + timeline + screenshot + notes). Header: breadcrumb, job title/company, sponsor badge, fit score badge, status chip, delete button (draft/terminal only).
+- `components/pipeline/ApplicationCard.tsx`: fully rewritten as compact click-through card. Outer shell links to `/pipeline/${id}`. Bottom bar: Approve button (draft only), PDF download link, Open link. Shows sponsor badge and keyword gap score chip.
+- `components/pipeline/KanbanBoard.tsx`: Job interface extended with sponsor fields; manual_required column added to COLUMNS list; column labels use `replace('_', ' ')`.
+- `app/pipeline/page.tsx`: Application and Job interfaces updated to include keyword_gap and sponsor fields.
+
+**Phase D — Dashboard + redesign (commit 6ce694b):**
+- `app/page.tsx` (rewritten): command center dashboard. Stat row (5 cards, double-bezel recipe): Total Jobs, Likely Sponsors (confirmed+likely), Drafts, This Week, Interviews. Pipeline funnel bar chart (7 stages, proportional widths). Sponsorship breakdown chip row (6 statuses). Action queue: Manual Required / Stale Drafts / Top Unscored (3 columns, skeleton loaders shaped like content). All numbers tabular-nums.
+- `app/resume/page.tsx` (NEW): wizard moved from home; emerald accent instead of violet; function unchanged.
+- `app/api/dashboard/route.ts` (NEW): single endpoint returns totalJobs, sponsorBreakdown, funnel, drafts, interviews, applicationsThisWeek, actionQueue (manualRequired + staleDrafts + topUnscored).
+- `components/Navbar.tsx`: links updated to Dashboard / Jobs / Pipeline / Resume / Profile / Emails. Active state now uses `bg-emerald-950/50` highlight + path prefix matching (so `/pipeline/[id]` shows Pipeline as active).
+- `components/jobs/JobCard.tsx`: added sponsor badge (emerald/yellow/orange/red by tier) with LCA count and evidence tooltip; entry chip + years chip. Double-bezel hover ring.
+- `components/jobs/JobFilters.tsx`: added Sponsor dropdown (all/confirmed/likely/possible/unknown/unlikely/blocked), hide-blocked toggle, entry-only toggle. Source dropdown now includes all 9 source types.
+- `components/jobs/JobBoard.tsx` + `ManualJobsSection.tsx`: Job interface extended with sponsor fields; default filter state includes hideBlocked/entryOnly/sponsorStatus.
+- `app/api/jobs/route.ts`: 3 new query params: `hideBlocked` (SQL: sponsor_status IS NULL OR NOT IN ('blocked','unlikely')), `entryOnly` (entry_level = 1), `sponsorStatus` (exact match).
+- `app/profile/page.tsx`: skeleton loader, zinc-950 bg, constrained layout.
+- `app/emails/page.tsx`: skeleton loader, composed empty state, zinc-950 bg.
+- `docs/DESIGN-RULES.md` (NEW): ~45-line design system reference (colors, radius, typography, card recipes, animations, accessibility).
+- `.claude/skills/redesign-existing-projects/SKILL.md` (NEW): adapted from taste-skill (MIT). Process + rules for applying design system to existing projects.
+- `package.json`: motion npm package added.
+- `npx tsc --noEmit` passes clean.
+
+**What still remains:**
+- Motion layoutId animations on kanban cards (motion is installed, not yet wired to KanbanBoard).
+- Phase 2 (email OAuth), Phase 3 (Anthropic swap), Phase 6 (interview prep) — all previously deferred.

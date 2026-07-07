@@ -1,6 +1,6 @@
 # JobPilot — Session Context & Roadmap
 
-*Last updated: 2026-07-03 (Session 4)*
+*Last updated: 2026-07-06 (Session 5)*
 
 This file exists so any future session can pick up exactly where we left off without re-reading the entire codebase. It covers what was built, what works, what is broken, the full gap list, and the roadmap to production.
 
@@ -13,8 +13,10 @@ This file exists so any future session can pick up exactly where we left off wit
 The core flow is:
 
 ```
-Scrape jobs from 23 companies (+ manually add any URL) → Score each against profile → Tailor resume per job → Auto-submit via Playwright → Track replies in email inbox → Move through kanban pipeline
+Scrape jobs from 104 targets across 8 source types (+ manually add any URL) → Classify sponsorship + seniority → Score each against profile → Tailor resume per job → Auto-submit via Playwright → Track replies in email inbox → Move through kanban pipeline
 ```
+
+**Mission focus (Session 5):** entry-level SWE/AI roles, US-wide, at employers open to OPT candidates needing future H1-B sponsorship. Every job carries a sponsor_status verdict backed by DOL/USCIS filing data and JD-text evidence.
 
 Everything runs locally. SQLite database, Node.js workers, Next.js frontend. No cloud deployment. No multi-user. No billing.
 
@@ -328,14 +330,14 @@ The project has `scripts/setup-mac-mini.sh` for one-shot setup.
 - [ ] Streaming responses for tailor endpoint (currently blocks 5-10s with no feedback)
 - [ ] Add token usage logging
 
-### Phase 4 — Expand job sources
+### Phase 4 — Expand job sources ✅ COMPLETE (Session 5)
 - [x] Fix broken slugs — all 11 dead targets re-verified and fixed, HF removed (Session 4)
-- [ ] Optional: Workable scraper to re-add Hugging Face
-- [ ] Add more NYC/remote AI companies as scraper targets
+- [x] Workable scraper — Hugging Face back (Session 5)
+- [x] 104 targets: 68 Greenhouse, 6 Lever, 21 Ashby, 9 Workday, Simplify feed, The Muse, 2 SmartRecruiters (Session 5)
 - [ ] Add "remote only" filter option to job board UI
 
-### Phase 5 — Pipeline intelligence
-- [ ] Persist keyword gap result in DB (new JSON column on applications)
+### Phase 5 — Pipeline intelligence (partially superseded by the v2 overhaul plan, see Session 5)
+- [x] Persist keyword gap result in DB (applications.keyword_gap, Session 5)
 - [ ] Add resume edit endpoint (PATCH resume_text and cover_letter on application)
 - [ ] Add inline resume editor on the pipeline card (edit tailored text before submitting)
 - [ ] Weekly report: jobs scraped, scored above 70, applied, replies
@@ -496,3 +498,30 @@ No other secrets. Gmail auth not yet wired.
 - `components/jobs/JobBoard.tsx` + `ManualJobsSection.tsx`: track a `tailorLabel` state fed by `onProgress`, passed to `JobCard` as `tailoringLabel` — button shows "Tailoring 1/3..." → "3/3" live.
 - `components/jobs/JobCard.tsx`: new optional `tailoringLabel` prop.
 - Verified end-to-end: 386 `cover_delta` events, 3 `stage` events, 1 `done`; draft application created with resume + cover letter; repeat tailor returns 409 JSON; resume PDF endpoint confirmed working after the chromium install.
+
+### Session 5 — JobPilot v2 Phases A+B: sponsorship engine + source expansion (2026-07-06)
+
+**Context:** Sid redefined the mission — entry-level SWE/AI roles US-wide at employers open to OPT/H1-B candidates. A 4-phase overhaul plan was approved (research by 4 subagents; full plan at `C:\Users\likea\.claude\plans\magical-hugging-puddle.md`). Sid instructed: **stop after Phase B**. Phases C and D are approved but NOT started.
+
+**Phase A — Sponsorship + seniority engine (commit 3debe4b):**
+- Schema: `jobs` gains sponsor_status / sponsor_evidence / sponsor_lca_count / years_required / entry_level / everify; `applications` gains keyword_gap; new `sponsor_history` table. Migration `0001_sudden_sage.sql` applied via `npm run db:generate` + `db:migrate`.
+- `lib/sponsorship.ts`: tiered regex catalog (HARD_NO blocks: refusals, "now or in the future", citizens-only, permanent-auth, clearance/ITAR/US-person, no-OPT; SOFT_NO: "must be authorized" template boilerplate — OPT satisfies it; YES: sponsorship-available/H1B-transfer/OPT-welcome), negation guard before positives, employer normalization + aliases + staffing-agency blocklist (Infosys/TCS/etc. filings never credit a client posting).
+- `lib/seniority.ts`: entry-level title tokens + max-years JD extraction; >=3 years overrides any junior title.
+- `lib/classify-job.ts`: joins JD verdict with `sponsor_history` (2 most recent FYs, dol preferred). Matching: exact norm → alias → token containment picking the highest-volume entity ("OpenAI" → "OPENAI OPCO") → Jaccard 0.85.
+- `scripts/ingest-sponsors.ts`: `uscis` mode (FY2021-23 CSVs, auto-download works) and `dol FY Q` mode (LCA xlsx, streamed via exceljs). Ingested: DOL FY2025 Q4 (112k certified H-1B LCAs, 21,791 employers) + FY2026 Q1 (78k, 15,776) + USCIS FY2021-23. Note: FY2026 Q2 not published yet (404); dol.gov 403s HEAD requests but GET with browser UA works from this machine. Refresh quarterly: `npx tsx scripts/ingest-sponsors.ts dol 2026 2` when it drops.
+- Classification runs at scrape-insert time; `scripts/backfill-classify.ts` re-runs it over all rows.
+- `scoreJob` returns sponsorship/seniority cross-check; `/api/score` applies composition (blocked capped at 20, unlikely x0.8, unknown -5, senior/3+yrs x0.7) and never un-blocks.
+- 25 fixture tests passed; spot-checks: Anduril blocked on ITAR/clearance, Anthropic confirmed via "do sponsor", OpenAI history matched through containment.
+
+**Phase B — Source expansion (commit 0a4ce85):**
+- 104 targets in scrapers.json, all slugs verified live 2026-07-06. New scrapers: `simplify.ts` (SimplifyJobs new-grad feed; curated entry-level; its sponsorship labels applied as hints — "Does Not Offer Sponsorship" → blocked, "Offers Sponsorship" → confirmed, citizenship-required listings dropped), `workable.ts`, `themuse.ts` (entry-level query), `smartrecruiters.ts` (list + per-job detail fetch).
+- Workday CXS scraper actually works now (was never exercised): tenant format `acme.wd12/Site_Name`, `appliedFacets` required, **limit max 20** (50 → HTTP 400), external_id from `bulletFields[0]` (list responses have NO `id` field — this was the silent insert killer), searchText server-side narrowing, 1000-offset cap.
+- Central non-US location exclusion in `_http.ts` (`isNonUsLocation`) replaces per-target include lists; count-based health warnings (empty boards return 200 on Lever/Ashby/SmartRecruiters).
+- RawJob gained optional `hints` (sponsor/entry) applied in `scrapeAll` on top of the classifier.
+- **DB after full scrape: 4,043 jobs** (was 651). By source: greenhouse 1,458 / simplify 1,278 / ashby 867 / themuse 196 / lever 171 / workday 57 / smartrecruiters 12 / workable 3. Sponsor: likely 1,280 / possible 1,019 / unknown 1,448 / confirmed 84 / blocked 145 / unlikely 10.
+- Known zero-count targets (title filter is strict, not a bug): Vercel, Temporal, Gemini, Epic Games, Highspot, Visa. Health warnings fire for them each scrape.
+
+**NEXT SESSION — Phase C then D (approved, not started):**
+- **Phase C — Application review workspace:** PATCH resume_text/cover_letter + DELETE + re-tailor + cover.pdf + AI critique endpoints; `/pipeline/[id]` detail page with embedded PDF preview, editors, keyword-gap panel, critique, status controls. Keyword gap is already persisted (done in A).
+- **Phase D — Dashboard + redesign:** home becomes command center (funnel, velocity, sponsorship breakdown, action queue); resume wizard moves to /resume; sponsorship badges + filter toggles on jobs page; taste-skill `redesign-skill` (clone in session scratchpad, or re-fetch github.com/Leonxlnx/taste-skill) copied to `.claude/skills/redesign-existing-projects/` + ~40-line docs/DESIGN-RULES.md; `motion` npm dependency for kanban layoutId animations.
+- Reminder: Next.js 16 has breaking changes — read `node_modules/next/dist/docs/` before writing route/page code (per AGENTS.md).

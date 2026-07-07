@@ -38,14 +38,16 @@ export default function JobBoard({ onTailor }: Props) {
   const [scoringId, setScoringId] = useState<string | null>(null);
   const [tailoringId, setTailoringId] = useState<string | null>(null);
   const [tailorLabel, setTailorLabel] = useState<string | null>(null);
+  const FILTER_DEFAULTS: JobFiltersState = { source: '', status: '', minScore: 0, search: '', sort: 'scraped_at', hideBlocked: false, entryOnly: false, sponsorStatus: '' };
+
   const [filters, setFilters] = useState<JobFiltersState>(() => {
     if (typeof window !== 'undefined') {
       try {
         const saved = localStorage.getItem('jp_filters');
-        if (saved) return JSON.parse(saved);
+        if (saved) return { ...FILTER_DEFAULTS, ...JSON.parse(saved) };
       } catch {}
     }
-    return { source: '', status: '', minScore: 0, search: '', sort: 'scraped_at', hideBlocked: false, entryOnly: false, sponsorStatus: '' };
+    return FILTER_DEFAULTS;
   });
 
   const loadJobs = useCallback(async () => {

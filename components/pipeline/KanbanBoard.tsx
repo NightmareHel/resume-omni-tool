@@ -1,5 +1,6 @@
 'use client';
 
+import { motion, AnimatePresence, LayoutGroup } from 'motion/react';
 import ApplicationCard from './ApplicationCard';
 
 interface Application {
@@ -56,31 +57,46 @@ export default function KanbanBoard({ applications, jobs, onStatusChange, onAppr
 
   const nonEmpty = COLUMNS.filter((c) => byStatus[c].length > 0 || ['draft', 'pending', 'submitted'].includes(c));
 
+  const spring = { type: 'spring' as const, stiffness: 400, damping: 35 };
+
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
-      {nonEmpty.map((col) => (
-        <div key={col} className="flex-shrink-0 w-64">
-          <div className={`border-t-2 ${COLUMN_COLORS[col]} mb-3 pt-2`}>
-            <h3 className="text-zinc-400 text-xs font-semibold uppercase tracking-wide">
-              {col.replace('_', ' ')} <span className="text-zinc-600 tabular-nums">({byStatus[col].length})</span>
-            </h3>
+    <LayoutGroup>
+      <div className="flex gap-4 overflow-x-auto pb-4">
+        {nonEmpty.map((col) => (
+          <div key={col} className="flex-shrink-0 w-64">
+            <div className={`border-t-2 ${COLUMN_COLORS[col]} mb-3 pt-2`}>
+              <h3 className="text-zinc-400 text-xs font-semibold uppercase tracking-wide">
+                {col.replace('_', ' ')} <span className="text-zinc-600 tabular-nums">({byStatus[col].length})</span>
+              </h3>
+            </div>
+            <div className="flex flex-col gap-2">
+              <AnimatePresence initial={false}>
+                {byStatus[col].map((app) => (
+                  <motion.div
+                    key={app.id}
+                    layoutId={app.id}
+                    layout
+                    transition={spring}
+                    initial={{ opacity: 0, scale: 0.96 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.96 }}
+                  >
+                    <ApplicationCard
+                      application={app}
+                      job={jobs[app.job_id] ?? null}
+                      onStatusChange={onStatusChange}
+                      onApprove={onApprove}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+              {byStatus[col].length === 0 && (
+                <p className="text-zinc-700 text-xs px-1">Empty</p>
+              )}
+            </div>
           </div>
-          <div className="flex flex-col gap-2">
-            {byStatus[col].map((app) => (
-              <ApplicationCard
-                key={app.id}
-                application={app}
-                job={jobs[app.job_id] ?? null}
-                onStatusChange={onStatusChange}
-                onApprove={onApprove}
-              />
-            ))}
-            {byStatus[col].length === 0 && (
-              <p className="text-zinc-700 text-xs px-1">Empty</p>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    </LayoutGroup>
   );
 }

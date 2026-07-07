@@ -18,6 +18,11 @@ interface Job {
   fit_grade: string | null;
   fit_summary: string | null;
   posted_at: string | null;
+  sponsor_status: string | null;
+  sponsor_evidence: string | null;
+  sponsor_lca_count: number | null;
+  entry_level: number | null;
+  years_required: number | null;
 }
 
 interface Props {
@@ -40,7 +45,7 @@ export default function JobBoard({ onTailor }: Props) {
         if (saved) return JSON.parse(saved);
       } catch {}
     }
-    return { source: '', status: '', minScore: 0, search: '', sort: 'scraped_at' };
+    return { source: '', status: '', minScore: 0, search: '', sort: 'scraped_at', hideBlocked: false, entryOnly: false, sponsorStatus: '' };
   });
 
   const loadJobs = useCallback(async () => {
@@ -52,6 +57,9 @@ export default function JobBoard({ onTailor }: Props) {
     if (filters.minScore > 0)   params.set('minScore', String(filters.minScore));
     if (filters.search)         params.set('search', filters.search);
     if (filters.sort)           params.set('sort', filters.sort);
+    if (filters.hideBlocked)    params.set('hideBlocked', 'true');
+    if (filters.entryOnly)      params.set('entryOnly', 'true');
+    if (filters.sponsorStatus)  params.set('sponsorStatus', filters.sponsorStatus);
     params.set('limit', '100');
 
     const res = await fetch(`/api/jobs?${params}`);

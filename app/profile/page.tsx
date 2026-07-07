@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import ProfileEditor from '@/components/profile/ProfileEditor';
 
-
 export default function ProfilePage() {
   const [initial, setInitial] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -17,19 +16,23 @@ export default function ProfilePage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-zinc-900">
-      <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-zinc-100">Master Profile</h1>
-        <p className="text-zinc-400 text-sm mt-1">This is your source of truth. Used for all resume tailoring and job scoring.</p>
-      </div>
-      {loading ? (
-        <p className="text-zinc-500 text-sm">Loading...</p>
-      ) : error ? (
-        <p className="text-red-400 text-sm">{error}</p>
-      ) : (
-        <ProfileEditor initial={initial} />
-      )}
+    <main className="min-h-screen bg-zinc-950">
+      <div className="max-w-3xl mx-auto px-6 py-8">
+        <div className="mb-6">
+          <h1 className="text-xl font-bold text-zinc-100">Master Profile</h1>
+          <p className="text-zinc-500 text-sm mt-1">Source of truth for resume tailoring and job scoring.</p>
+        </div>
+        {loading ? (
+          <div className="flex flex-col gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-12 bg-zinc-900 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        ) : error ? (
+          <div className="p-4 bg-red-950 ring-1 ring-red-800 rounded-xl text-red-400 text-sm">{error}</div>
+        ) : (
+          <ProfileEditor initial={initial} />
+        )}
       </div>
     </main>
   );

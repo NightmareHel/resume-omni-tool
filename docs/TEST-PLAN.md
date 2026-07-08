@@ -31,7 +31,7 @@ Run before any manual testing. All must pass green.
 
 - [ ] Dev server running: `npm run dev`
 - [ ] No console errors on homepage (DevTools console clean)
-- [ ] All 5 nav links work: Resume (/), Jobs (/jobs), Pipeline (/pipeline), Profile (/profile), Emails (/emails)
+- [ ] All 6 nav links work: Dashboard (/), Jobs (/jobs), Pipeline (/pipeline), Resume (/resume), Profile (/profile), Emails (/emails)
 - [ ] Toast system is visible: open any page, confirm no stale alerts in console
 
 ---
@@ -193,6 +193,91 @@ Setup: requires Gmail MCP connected (run from Boardroom Claude Code session).
 | Two concurrent scrapes | Second returns 409, first continues |
 | API down (kill dev server then reload) | Error message shown, loading doesn't freeze |
 | Reload page mid-tailor | Tailor continues server-side, result in DB on completion |
+
+---
+
+## H2 — Dashboard
+
+- [ ] Go to / — stat row loads (5 cards: Total Jobs, Likely Sponsors, Drafts, This Week, Interviews)
+- [ ] Numbers match: Total Jobs = DB row count, Likely Sponsors = confirmed + likely counts
+- [ ] Funnel bars are proportional — tallest bar fills full width, others scale relative to it
+- [ ] Sponsorship chip row shows all 6 tiers with correct counts
+- [ ] Action queue: Manual Required, Stale Drafts, Top Unscored each show correct items (or "None" state)
+- [ ] Skeleton loaders appear briefly on first load before data arrives
+- [ ] Clicking stat cards navigates to /jobs or /pipeline as appropriate
+
+---
+
+## I2 — Application Review Workspace
+
+Prerequisites: at least one tailored draft application in DB.
+
+**Detail page load:**
+- [ ] Navigate to /pipeline — click "Open" on any card — arrives at /pipeline/[id]
+- [ ] Header shows: job title, company name, sponsor badge, fit score, status chip
+- [ ] Left column shows PDF iframe
+- [ ] Right column shows 4 tabs: Resume, Cover Letter, Quality, Activity
+
+**PDF rendering (critical — see HANDOFF-2026-07-07.md for known issues):**
+- [ ] Resume tab is default — resume PDF renders in iframe within 5s
+- [ ] No blank white iframe / no browser PDF error page
+- [ ] Click "Cover Letter" toggle — cover letter PDF renders
+- [ ] Click "Resume" toggle — switches back
+- [ ] Click "Download" — PDF downloads to disk and is valid (opens in PDF reader)
+- [ ] Directly visit /api/applications/[id]/resume.pdf in a new tab — PDF renders
+- [ ] Directly visit /api/applications/[id]/cover.pdf in a new tab — PDF renders
+
+**PDF content (visual check):**
+- [ ] Resume: name header at top, contact line, section headers bold with border-bottom
+- [ ] Resume: bullet points render as bullets, not dashes or raw characters
+- [ ] Resume: no content cut off at page edge (margins adequate)
+- [ ] Resume: ATS-safe — single column, no tables, no text boxes
+- [ ] Cover letter: name + contact at top, 3-4 paragraphs, wider margins than resume
+- [ ] Cover letter: no markdown symbols (`**`, `#`, `-`) visible in output
+
+**Resume editor tab:**
+- [ ] Resume text is populated in textarea
+- [ ] Edit a word — click "Save + Refresh PDF" — iframe reloads with updated content
+- [ ] Verify the edit appears in the new PDF render
+- [ ] "Re-Tailor" button visible (draft only) — click — SSE progress "1/3 → 2/3 → 3/3" — toast "Re-tailored successfully"
+- [ ] After re-tailor: textarea and iframe both update
+
+**Cover letter editor tab:**
+- [ ] Cover letter text populated
+- [ ] Edit — save — iframe refreshes
+
+**Quality tab:**
+- [ ] Keyword gap panel shows missing keywords (red chips) and found keywords (green chips)
+- [ ] Score displayed (e.g. "72/100")
+- [ ] "Run Critique" button — click — spinner — issues render with severity labels
+- [ ] Issue list: high = red, medium = amber, low = zinc
+- [ ] Verdict text appears above issue list
+- [ ] "Re-run" button appears after first critique
+
+**Activity tab:**
+- [ ] Status controls shown — for draft: "Approve and Queue" button
+- [ ] Click "Approve and Queue" — status chip in header updates to "pending"
+- [ ] Timeline shows created_at date
+- [ ] Notes textarea — type text — click "Save Notes" — reload page — notes persist
+
+**Delete:**
+- [ ] On a draft or terminal application: "Delete" button visible in header
+- [ ] Click — confirm dialog — redirects to /pipeline — card gone
+- [ ] On a pending/submitted application: Delete button NOT shown
+
+---
+
+## I3 — Jobs Page: Sponsor Badges + Filters
+
+- [ ] JobCards show sponsor badge for non-null sponsor_status
+- [ ] Confirmed/likely: emerald badge with LCA count if available
+- [ ] Blocked: red "No Sponsorship" badge
+- [ ] Hover over badge — tooltip shows verbatim evidence phrase (if available)
+- [ ] Entry chip appears on entry_level=1 jobs
+- [ ] Years chip (e.g. "3yr+") appears where years_required > 0
+- [ ] "Hide blocked" toggle: check it — blocked/unlikely jobs disappear — uncheck — return
+- [ ] "Entry only" toggle: check — only entry_level=1 jobs shown
+- [ ] Sponsor dropdown: select "Confirmed" — only confirmed-sponsor jobs shown
 
 ---
 

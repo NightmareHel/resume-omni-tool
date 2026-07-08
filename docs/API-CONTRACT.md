@@ -53,10 +53,14 @@ Output:
 
 ### GET /api/jobs
 Query params (all optional):
-- `source` — `greenhouse | lever | ashby | workday | custom`
+- `source` — `greenhouse | lever | ashby | workday | custom | simplify | workable | themuse | smartrecruiters`
 - `status` — `new | reviewed | queued | applied | archived`
 - `minScore` — number 0–100
 - `search` — full-text search on title + company
+- `hideBlocked` — `true` omits jobs with sponsor_status `blocked` or `unlikely`
+- `entryOnly` — `true` shows only jobs with `entry_level = 1`
+- `sponsorStatus` — exact match on `sponsor_status` value
+- `excludeCustom` — `true` omits source=custom (used by JobBoard to exclude My Jobs)
 - `page` — default 1
 - `limit` — default 50, max 200
 
@@ -114,10 +118,52 @@ Output: `{ "application": Application, "job": Job }`
 Errors: `404`
 
 ### PATCH /api/applications/[id]
-Input: `{ "status": "pending", "notes": "Looks good" }` (both optional)
-Status transitions enforced — see state machine in DATA-MODEL.md.
+Input (all fields optional):
+```json
+{ "status": "pending", "notes": "Looks good", "resume_text": "...", "cover_letter": "..." }
+```
+- `status` transitions enforced by state machine (see DATA-MODEL.md)
+- `resume_text` and `cover_letter` can be updated on any status — no state machine enforcement
 Output: `{ "application": Application }`
-Errors: `400` if transition is invalid (e.g. rejected → offer), `404`
+Errors: `400` if transition is invalid, `404`
+
+### DELETE /api/applications/[id]
+Deletes the application row. Only permitted when status is `draft` or a terminal status (`rejected`, `withdrawn`, `manual_required`). Blocked on active statuses to prevent data loss.
+Output: `{ "ok": true }`
+Errors: `400` if status is not draft/terminal, `404`
+
+### GET /api/applications/[id]/resume.pdf
+Generates and streams a PDF of the tailored resume via Playwright headless Chromium.
+Returns: `application/pdf` inline
+Errors: `400` if no resume_text on application, `400` if profile missing, `404`
+Note: cold start is ~2-4s (Chromium launch). Subsequent calls on a warm server are faster.
+
+### GET /api/applications/[id]/cover.pdf
+Generates and streams a PDF of the cover letter via Playwright headless Chromium.
+Returns: `application/pdf` inline
+Errors: `400` if no cover_letter on application, `400` if profile missing, `404`
+
+### POST /api/applications/[id]/retailor
+Re-runs the full tailor flow (keyword gap + resume rewrite + cover letter) for an existing application. Replaces `resume_text`, `cover_letter`, and `keyword_gap` in-place. Only allowed on `draft` status.
+Returns: SSE stream (same event structure as `POST /api/jobs/[id]/tailor`)
+Events: `stage` / `cover_delta` / `done` / `error`
+Errors: `400` if not draft, `404`
+
+### POST /api/applications/[id]/critique
+Runs AI critique of the tailored resume against the job description.
+Input: none
+Output:
+```json
+{
+  "ats_score": 78,
+  "issues": [
+    { "severity": "high", "issue": "Missing core keyword 'RAG'", "fix": "Add to Skills and mention in last role bullet" },
+    { "severity": "medium", "issue": "Summary is generic", "fix": "Mirror JD language about 'production ML systems'" }
+  ],
+  "verdict": "Solid match, one high-severity keyword gap to fix."
+}
+```
+Errors: `400` if no resume_text, `404`
 
 ### POST /api/applications/[id]/submit
 Queues the application for Playwright form submission. Returns immediately.
@@ -174,6 +220,29 @@ Errors: `404` if job not found, `400` if profile is empty, `409` if draft applic
 
 ---
 
+## Dashboard
+
+### GET /api/dashboard
+Returns all stats needed for the command center home page in a single call.
+Output:
+```json
+{
+  "totalJobs": 4043,
+  "sponsorBreakdown": { "confirmed": 84, "likely": 1280, "possible": 1019, "unknown": 1448, "unlikely": 10, "blocked": 145 },
+  "funnel": { "draft": 3, "pending": 1, "submitted": 2, "replied": 0, "screen": 0, "interview": 0, "offer": 0, "rejected": 1, "withdrawn": 0 },
+  "drafts": 3,
+  "interviews": 0,
+  "applicationsThisWeek": 3,
+  "actionQueue": {
+    "manualRequired": [ /* Application[] limit 5 */ ],
+    "staleDrafts": [ /* Application[] older than 2 days, limit 5 */ ],
+    "topUnscored": [ /* Job[] with fit_score null and sponsor_status not blocked, limit 5 */ ]
+  }
+}
+```
+
+---
+
 ## Emails
 
 ### GET /api/emails
@@ -189,7 +258,8 @@ Output: `{ "found": 12, "matched": 4 }`
 
 ```typescript
 type JobStatus = 'new' | 'reviewed' | 'queued' | 'applied' | 'archived';
-type JobSource = 'greenhouse' | 'lever' | 'ashby' | 'workday' | 'custom';
+type JobSource = 'greenhouse' | 'lever' | 'ashby' | 'workday' | 'custom' | 'simplify' | 'workable' | 'themuse' | 'smartrecruiters';
+type SponsorStatus = 'confirmed' | 'likely' | 'possible' | 'unknown' | 'unlikely' | 'blocked';
 
 interface Job {
   id: string;
@@ -203,17 +273,24 @@ interface Job {
   description: string;
   salary_min: number | null;
   salary_max: number | null;
-  posted_at: string | null;  // ISO 8601
-  scraped_at: string;        // ISO 8601
+  posted_at: string | null;       // ISO 8601
+  scraped_at: string;             // ISO 8601
   fit_score: number | null;
-  fit_grade: string | null;  // A | B | C | D | F
+  fit_grade: string | null;       // A | B | C | D | F
   fit_summary: string | null;
   status: JobStatus;
+  // Sponsorship + seniority (set at scrape time by lib/classify-job.ts)
+  sponsor_status: SponsorStatus | null;
+  sponsor_evidence: string | null; // verbatim JD phrase that triggered the verdict
+  sponsor_lca_count: number | null;
+  years_required: number | null;
+  entry_level: number | null;     // 1 = entry, 0 = not, null = undetermined
+  everify: number | null;
 }
 
 type ApplicationStatus =
   | 'draft' | 'pending' | 'submitted' | 'replied'
-  | 'screen' | 'interview' | 'offer' | 'rejected' | 'withdrawn';
+  | 'screen' | 'interview' | 'offer' | 'rejected' | 'withdrawn' | 'manual_required';
 
 interface Application {
   id: string;
@@ -223,7 +300,8 @@ interface Application {
   submission_method: 'form_fill' | 'email' | 'manual' | null;
   resume_text: string | null;
   cover_letter: string | null;
-  form_data: Record<string, string> | null;  // parsed from JSON column
+  keyword_gap: string | null;    // JSON-encoded KeywordGapResult, set by tailor/retailor
+  form_data: Record<string, string> | null;
   screenshot_path: string | null;
   notes: string | null;
   created_at: string;

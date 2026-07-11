@@ -10,6 +10,14 @@ interface DashboardData {
   drafts: number;
   interviews: number;
   applicationsThisWeek: number;
+  velocity: {
+    submittedThisWeek: number;
+    submittedLastWeek: number;
+    weeklySubmissions: number[];
+    totalSubmitted: number;
+    responseRate: number | null;
+    avgDaysToSubmit: number | null;
+  };
   actionQueue: {
     manualRequired: Array<{ id: string; job_id: string; status: string; created_at: string }>;
     staleDrafts: Array<{ id: string; job_id: string; status: string; created_at: string }>;
@@ -180,6 +188,59 @@ export default function Dashboard() {
             )}
             <p className="text-xs text-zinc-600 mt-auto">Across {data?.totalJobs ?? '...'} scraped jobs</p>
           </div>
+        </div>
+
+        {/* Velocity */}
+        <div className="bg-zinc-900 ring-1 ring-white/10 rounded-xl p-5 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-zinc-300">Velocity</h2>
+            {!loading && data && (
+              <span className="text-xs text-zinc-500">
+                {data.velocity.totalSubmitted} submitted all-time
+              </span>
+            )}
+          </div>
+          {loading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-16 bg-zinc-800 rounded animate-pulse" />)}
+            </div>
+          ) : data && (
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div className="flex flex-col gap-0.5">
+                <p className="text-2xl font-bold tabular-nums text-zinc-100">{data.velocity.submittedThisWeek}</p>
+                <p className="text-xs text-zinc-500">
+                  submitted this week
+                  {data.velocity.submittedLastWeek > 0 && (
+                    <span className={data.velocity.submittedThisWeek >= data.velocity.submittedLastWeek ? ' text-emerald-500' : ' text-red-400'}>
+                      {' '}({data.velocity.submittedThisWeek >= data.velocity.submittedLastWeek ? '+' : ''}{data.velocity.submittedThisWeek - data.velocity.submittedLastWeek} vs last)
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <p className="text-2xl font-bold tabular-nums text-zinc-100">{data.velocity.responseRate !== null ? `${data.velocity.responseRate}%` : '—'}</p>
+                <p className="text-xs text-zinc-500">response rate</p>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <p className="text-2xl font-bold tabular-nums text-zinc-100">{data.velocity.avgDaysToSubmit !== null ? data.velocity.avgDaysToSubmit : '—'}</p>
+                <p className="text-xs text-zinc-500">avg days draft → submit</p>
+              </div>
+              <div className="flex items-end gap-1 h-14">
+                {data.velocity.weeklySubmissions.map((n, i) => {
+                  const max = Math.max(...data.velocity.weeklySubmissions, 1);
+                  return (
+                    <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                      <div
+                        className={`w-full rounded-sm ${i === 5 ? 'bg-emerald-600' : 'bg-zinc-700'}`}
+                        style={{ height: `${Math.max((n / max) * 100, n > 0 ? 8 : 2)}%` }}
+                        title={`${n} submissions`}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Action queue */}

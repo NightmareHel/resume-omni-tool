@@ -17,13 +17,21 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const [prof] = await db.select().from(profile).where(eq(profile.id, 'default'));
   if (!prof) return new Response(JSON.stringify({ error: 'Profile not found' }), { status: 400 });
 
-  const pdfBuffer = await generateCoverLetterPDF(app.cover_letter, prof);
+  try {
+    const pdfBuffer = await generateCoverLetterPDF(app.cover_letter, prof);
 
-  return new Response(new Uint8Array(pdfBuffer), {
-    headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="cover-${id.slice(0, 8)}.pdf"`,
-      'Content-Length': String(pdfBuffer.length),
-    },
-  });
+    return new Response(new Uint8Array(pdfBuffer), {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `inline; filename="cover-${id.slice(0, 8)}.pdf"`,
+        'Content-Length': String(pdfBuffer.length),
+      },
+    });
+  } catch (err) {
+    console.error('Cover letter PDF generation failed:', err);
+    return new Response(JSON.stringify({ error: 'PDF generation failed' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 }

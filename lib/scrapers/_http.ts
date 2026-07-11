@@ -42,7 +42,7 @@ export function matchesFilter(value: string, filters?: string[]): boolean {
 
 // Seniority terms that disqualify a job title for a new grad search
 const TITLE_EXCLUDES = [
-  'senior', 'sr.', 'staff', 'principal', 'lead', 'manager',
+  'senior', 'sr.', 'sr ', 'staff', 'principal', 'lead', 'manager', 'mgr',
   'director', 'head', 'vp', 'vice president', 'architect',
   'distinguished', 'intern', 'co-op',
 ];

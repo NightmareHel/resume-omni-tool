@@ -31,6 +31,7 @@ interface Props {
   jobs: Record<string, Job>;
   onStatusChange: (id: string, status: string, notes?: string) => void;
   onApprove: (id: string) => void;
+  onRemove: (id: string) => void;
 }
 
 const COLUMNS = ['draft', 'pending', 'submitted', 'replied', 'screen', 'interview', 'offer', 'rejected', 'withdrawn'];
@@ -47,7 +48,7 @@ const COLUMN_COLORS: Record<string, string> = {
   withdrawn: 'border-zinc-700',
 };
 
-export default function KanbanBoard({ applications, jobs, onStatusChange, onApprove }: Props) {
+export default function KanbanBoard({ applications, jobs, onStatusChange, onApprove, onRemove }: Props) {
   const byStatus: Record<string, Application[]> = {};
   for (const col of COLUMNS) byStatus[col] = [];
   for (const app of applications) {
@@ -86,6 +87,7 @@ export default function KanbanBoard({ applications, jobs, onStatusChange, onAppr
                       job={jobs[app.job_id] ?? null}
                       onStatusChange={onStatusChange}
                       onApprove={onApprove}
+                      onRemove={onRemove}
                     />
                   </motion.div>
                 ))}

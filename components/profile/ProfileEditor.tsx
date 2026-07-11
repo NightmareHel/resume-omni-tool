@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/lib/toast';
 
 interface ExperienceEntry { company: string; title: string; start: string; end: string; bullets: string[] }
-interface EducationEntry  { school: string; degree: string; end: string }
+interface ProjectEntry    { name: string; tech: string; link: string; bullets: string[] }
+interface EducationEntry  { school: string; degree: string; end: string; gpa?: string; details?: string }
 
 interface ProfileData {
   full_name:        string;
@@ -17,6 +18,7 @@ interface ProfileData {
   summary:          string;
   skills:           string[];
   experience:       ExperienceEntry[];
+  projects:         ProjectEntry[];
   education:        EducationEntry[];
   target_roles:     string[];
   target_locations: string[];
@@ -25,7 +27,7 @@ interface ProfileData {
 
 const empty: ProfileData = {
   full_name: '', email: '', phone: '', location: '', linkedin_url: '', github_url: '', portfolio_url: '',
-  summary: '', skills: [], experience: [], education: [], target_roles: [], target_locations: [], salary_min: '',
+  summary: '', skills: [], experience: [], projects: [], education: [], target_roles: [], target_locations: [], salary_min: '',
 };
 
 interface Props {
@@ -80,6 +82,13 @@ export default function ProfileEditor({ initial, onSaved }: Props) {
         end:     e.end     ?? '',
         bullets: e.bullets ?? [],
       })),
+      projects: (base.projects ?? []).map((pr: ProjectEntry) => ({
+        ...pr,
+        name:    pr.name    ?? '',
+        tech:    pr.tech    ?? '',
+        link:    pr.link    ?? '',
+        bullets: pr.bullets ?? [],
+      })),
       education: (base.education ?? []).map((e: EducationEntry) => ({
         ...e,
         school: e.school ?? '',
@@ -111,6 +120,14 @@ export default function ProfileEditor({ initial, onSaved }: Props) {
     set('experience', exp);
   };
   const removeExp = (i: number) => set('experience', data.experience.filter((_, idx) => idx !== i));
+
+  const addProject = () => set('projects', [...data.projects, { name: '', tech: '', link: '', bullets: [] }]);
+  const updateProj = (i: number, field: keyof ProjectEntry, val: string | string[]) => {
+    const projects = [...data.projects];
+    projects[i] = { ...projects[i], [field]: val };
+    set('projects', projects);
+  };
+  const removeProject = (i: number) => set('projects', data.projects.filter((_, idx) => idx !== i));
 
   const addEducation = () => set('education', [...data.education, { school: '', degree: '', end: '' }]);
   const updateEdu = (i: number, field: keyof EducationEntry, val: string) => {
@@ -194,6 +211,29 @@ export default function ProfileEditor({ initial, onSaved }: Props) {
               onChange={(ev) => updateExp(i, 'bullets', ev.target.value.split('\n'))}
             />
             <button onClick={() => removeExp(i)} className="self-end text-xs text-red-400 hover:text-red-300">Remove</button>
+          </div>
+        ))}
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-zinc-100 font-semibold text-base border-b border-zinc-700 pb-2 flex-1">Projects</h2>
+          <button onClick={addProject} className="text-xs bg-zinc-700 hover:bg-zinc-600 text-zinc-200 px-2 py-1 rounded ml-4">+ Add</button>
+        </div>
+        {data.projects.map((pr, i) => (
+          <div key={i} className="bg-zinc-800 border border-zinc-700 rounded-lg p-4 flex flex-col gap-3">
+            <div className="grid grid-cols-2 gap-3">
+              <input className="bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-2 py-1 text-sm" placeholder="Project name" value={pr.name ?? ''} onChange={(ev) => updateProj(i, 'name', ev.target.value)} />
+              <input className="bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-2 py-1 text-sm" placeholder="Tech (comma-separated)" value={pr.tech ?? ''} onChange={(ev) => updateProj(i, 'tech', ev.target.value)} />
+            </div>
+            <input className="bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-2 py-1 text-sm" placeholder="Link (github / devpost)" value={pr.link ?? ''} onChange={(ev) => updateProj(i, 'link', ev.target.value)} />
+            <textarea
+              className="bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-2 py-1 text-sm min-h-20 resize-y placeholder-zinc-500"
+              placeholder="Bullet points (one per line)"
+              value={pr.bullets.join('\n')}
+              onChange={(ev) => updateProj(i, 'bullets', ev.target.value.split('\n'))}
+            />
+            <button onClick={() => removeProject(i)} className="self-end text-xs text-red-400 hover:text-red-300">Remove</button>
           </div>
         ))}
       </section>

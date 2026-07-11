@@ -40,6 +40,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if ('resume_text' in body)  updates.resume_text = body.resume_text;
   if ('cover_letter' in body) updates.cover_letter = body.cover_letter;
 
+  // Manual submission: stamp applied_at + method the first time an
+  // application reaches submitted without the apply worker having set them.
+  if (body.status === 'submitted' && !app.applied_at) {
+    updates.applied_at = now;
+    updates.submission_method = app.submission_method ?? 'manual';
+  }
+
   await db.update(applications).set(updates).where(eq(applications.id, id));
   const [updated] = await db.select().from(applications).where(eq(applications.id, id));
   return NextResponse.json({ application: updated });

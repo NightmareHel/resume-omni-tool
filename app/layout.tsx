@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ResumeOmniTool",
-  description: "ATS-optimized resume analysis and rewriting powered by Claude",
+  title: "JobPilot",
+  description: "Self-hosted AI job application pipeline: scrape, score, tailor, track",
 };
 
 export default function RootLayout({

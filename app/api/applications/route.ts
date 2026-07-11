@@ -10,9 +10,34 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get('status');
 
   const where = status ? eq(applications.status, status) : undefined;
-  const rows = await db.select().from(applications).where(where).orderBy(applications.created_at);
+  // Join the job onto each application so the pipeline board can resolve
+  // title/company/url without a separate bulk /api/jobs fetch (which only
+  // returns a slice of the 4k+ jobs and drops freshly tailored ones).
+  const rows = await db
+    .select({
+      application: applications,
+      job: {
+        id:                jobs.id,
+        title:             jobs.title,
+        company:           jobs.company,
+        source:            jobs.source,
+        url:               jobs.url,
+        fit_score:         jobs.fit_score,
+        fit_grade:         jobs.fit_grade,
+        sponsor_status:    jobs.sponsor_status,
+        sponsor_evidence:  jobs.sponsor_evidence,
+        sponsor_lca_count: jobs.sponsor_lca_count,
+      },
+    })
+    .from(applications)
+    .leftJoin(jobs, eq(applications.job_id, jobs.id))
+    .where(where)
+    .orderBy(applications.created_at);
 
-  return NextResponse.json({ applications: rows });
+  return NextResponse.json({
+    applications: rows.map((r) => r.application),
+    jobs: rows.map((r) => r.job).filter((j): j is NonNullable<typeof j> => j !== null && j.id !== null),
+  });
 }
 
 export async function POST(req: NextRequest) {

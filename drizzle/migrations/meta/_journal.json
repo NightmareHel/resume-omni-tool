@@ -15,6 +15,20 @@
       "when": 1783380909723,
       "tag": "0001_sudden_sage",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1783667264115,
+      "tag": "0002_uneven_power_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1783754922293,
+      "tag": "0003_daily_raider",
+      "breakpoints": true
     }
   ]
 }

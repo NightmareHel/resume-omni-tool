@@ -1,17 +1,17 @@
 /**
- * Email sync worker — polls Gmail via Boardroom's Gmail MCP and classifies
- * recruiter threads. Matches threads to applications by company name.
+ * Email sync worker — polls Gmail directly (OAuth refresh token, readonly
+ * scope) every 30 minutes, classifies recruiter threads with Groq, and
+ * matches them to applications by company name.
  *
- * This worker is intended to run inside a Claude Code session where Gmail MCP
- * tools are available. In standalone Node.js mode, it logs a warning and exits.
- *
+ * One-time setup: npx tsx scripts/gmail-auth.ts (writes GMAIL_REFRESH_TOKEN).
  * Run with: npx tsx worker/email-sync.ts
  */
+import '../lib/load-env';
 import cron from 'node-cron';
+import { google } from 'googleapis';
 import { getDb } from '../lib/db';
 import { email_threads, applications, jobs } from '../lib/schema';
-import { eq, inArray } from 'drizzle-orm';
-import { uuid } from '../lib/ids';
+import { inArray } from 'drizzle-orm';
 import OpenAI from 'openai';
 
 const MODEL = 'llama-3.3-70b-versatile';
@@ -23,12 +23,19 @@ function groqClient() {
   });
 }
 
-interface GmailThread {
-  id: string;
-  subject?: string;
-  from?: string;
-  snippet?: string;
-  date?: string;
+// Recruiting-shaped Gmail query: subject terms recruiters actually use, plus
+// the notification senders of the big ATSes. 3-day window — the 30-min cron
+// plus PK-based dedupe makes overlap harmless.
+const GMAIL_QUERY =
+  'newer_than:3d (subject:(interview OR application OR applying OR opportunity OR position OR "next steps" OR offer OR recruiter) ' +
+  'OR from:(greenhouse.io OR ashbyhq.com OR hire.lever.co OR myworkday.com OR smartrecruiters.com))';
+
+function gmailClient() {
+  const { GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, GMAIL_REFRESH_TOKEN } = process.env;
+  if (!GMAIL_CLIENT_ID || !GMAIL_CLIENT_SECRET || !GMAIL_REFRESH_TOKEN) return null;
+  const oauth2 = new google.auth.OAuth2(GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET);
+  oauth2.setCredentials({ refresh_token: GMAIL_REFRESH_TOKEN });
+  return google.gmail({ version: 'v1', auth: oauth2 });
 }
 
 async function classifyThread(subject: string, snippet: string): Promise<{
@@ -91,21 +98,74 @@ async function matchToApplication(company: string | null, db: ReturnType<typeof 
 async function syncEmails() {
   console.log(`[email-sync] Starting at ${new Date().toISOString()}`);
 
-  // Gmail MCP is only available inside a Claude Code session.
-  // In standalone mode, this worker logs a notice and waits for the MCP session.
-  // The actual MCP call flow is documented here for when this runs in a Boardroom session:
-  //
-  //   const threads = await mcp.gmail.searchThreads({
-  //     query: 'subject:(interview OR application OR opportunity OR role) is:unread newer_than:2d'
-  //   });
-  //   for (const thread of threads) {
-  //     const full = await mcp.gmail.getThread({ threadId: thread.id });
-  //     // classify + insert below
-  //   }
+  const gmail = gmailClient();
+  if (!gmail) {
+    console.log('[email-sync] Gmail not configured — set GMAIL_CLIENT_ID/SECRET and run: npx tsx scripts/gmail-auth.ts');
+    return;
+  }
 
-  console.log('[email-sync] Note: Gmail MCP sync requires a Boardroom Claude Code session.');
-  console.log('[email-sync] In standalone mode, use the /emails page → Sync Now button from a Boardroom session.');
-  console.log('[email-sync] Worker standing by for manual trigger or session integration.');
+  const db = getDb();
+  try {
+    const list = await gmail.users.threads.list({ userId: 'me', q: GMAIL_QUERY, maxResults: 50 });
+    const threads = list.data.threads ?? [];
+    if (threads.length === 0) { console.log('[email-sync] No matching threads'); return; }
+
+    // PK = Gmail thread id, so dedupe is a simple existing-id check.
+    const ids = threads.map((t) => t.id!).filter(Boolean);
+    const existing = new Set(
+      (await db.select({ id: email_threads.id }).from(email_threads).where(inArray(email_threads.id, ids))).map((r) => r.id)
+    );
+    const fresh = threads.filter((t) => t.id && !existing.has(t.id));
+    console.log(`[email-sync] ${threads.length} threads matched, ${fresh.length} new`);
+
+    let inserted = 0;
+    for (const t of fresh) {
+      try {
+        const full = await gmail.users.threads.get({
+          userId: 'me',
+          id: t.id!,
+          format: 'metadata',
+          metadataHeaders: ['Subject', 'From', 'Date'],
+        });
+        const msg = full.data.messages?.[0];
+        const headers = msg?.payload?.headers ?? [];
+        const h = (name: string) => headers.find((x) => x.name?.toLowerCase() === name.toLowerCase())?.value ?? '';
+        const subject = h('Subject');
+        const fromRaw = h('From'); // "Name <email>"
+        const fromMatch = /^(.*?)\s*<(.+)>$/.exec(fromRaw);
+        const snippet = full.data.snippet ?? msg?.snippet ?? '';
+        const receivedAt = msg?.internalDate
+          ? new Date(parseInt(msg.internalDate, 10)).toISOString()
+          : new Date().toISOString();
+
+        const cls = await classifyThread(subject, snippet);
+        const match = await matchToApplication(cls.company, db);
+
+        await db.insert(email_threads).values({
+          id:              t.id!,
+          application_id:  match.applicationId,
+          job_id:          match.jobId,
+          subject:         subject || '(no subject)',
+          from_email:      fromMatch ? fromMatch[2] : fromRaw,
+          from_name:       fromMatch ? fromMatch[1].replace(/"/g, '') : null,
+          received_at:     receivedAt,
+          snippet:         snippet.slice(0, 500),
+          classification:  cls.classification,
+          action_required: cls.action_required ? 1 : 0,
+          read:            0,
+        });
+        inserted++;
+        if (cls.classification !== 'other') {
+          console.log(`[email-sync] ${cls.classification.toUpperCase()}: "${subject}" ${match.applicationId ? '→ matched application' : ''}`);
+        }
+      } catch (err) {
+        console.error(`[email-sync] Failed thread ${t.id}:`, err instanceof Error ? err.message : err);
+      }
+    }
+    console.log(`[email-sync] Done — ${inserted} new threads stored`);
+  } catch (err) {
+    console.error('[email-sync] Sync failed:', err instanceof Error ? err.message : err);
+  }
 }
 
 syncEmails();

@@ -41,13 +41,12 @@ export default function PipelinePage() {
     setLoading(true);
     setError(null);
     try {
-      const [appsRes, jobsRes] = await Promise.all([
-        fetch('/api/applications').then((r) => r.json()),
-        fetch('/api/jobs?limit=200').then((r) => r.json()),
-      ]);
+      const appsRes = await fetch('/api/applications').then((r) => r.json());
       setApps(appsRes.applications ?? []);
+      // Jobs come joined onto the applications payload, so every application
+      // (including freshly tailored ones) resolves its job here.
       const jobMap: Record<string, Job> = {};
-      for (const j of jobsRes.jobs ?? []) jobMap[j.id] = j;
+      for (const j of appsRes.jobs ?? []) jobMap[j.id] = j;
       setJobs(jobMap);
     } catch {
       setError('Failed to load pipeline. Refresh to retry.');
@@ -89,6 +88,17 @@ export default function PipelinePage() {
     addToast('Queued for submission — check back in a few minutes', 'info');
   };
 
+  const handleRemove = async (id: string) => {
+    const res = await fetch(`/api/applications/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      setApps((prev) => prev.filter((a) => a.id !== id));
+      addToast('Draft removed', 'success');
+    } else {
+      const { error: err } = await res.json().catch(() => ({}));
+      addToast((err as string) ?? 'Remove failed', 'error');
+    }
+  };
+
   return (
     <main className="min-h-screen bg-zinc-900">
       <div className="p-6">
@@ -108,6 +118,7 @@ export default function PipelinePage() {
           jobs={jobs}
           onStatusChange={handleStatusChange}
           onApprove={handleApprove}
+          onRemove={handleRemove}
         />
       )}
       </div>

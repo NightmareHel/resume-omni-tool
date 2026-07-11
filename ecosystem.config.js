@@ -37,5 +37,16 @@ module.exports = {
       restart_delay: 5000,
       max_restarts:  10,
     },
+    {
+      name:         'score',
+      script:       path.join(root, 'node_modules', '.bin', 'tsx'),
+      args:         'worker/score.ts',
+      cwd:          root,
+      env: {
+        NODE_ENV: 'production',
+      },
+      restart_delay: 5000,
+      max_restarts:  10,
+    },
   ],
 };

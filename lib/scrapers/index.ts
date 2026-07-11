@@ -10,12 +10,16 @@ import { scrapeSimplify } from './simplify';
 import { scrapeWorkable } from './workable';
 import { scrapeTheMuse } from './themuse';
 import { scrapeSmartRecruiters } from './smartrecruiters';
+import { scrapeVansh } from './vanshb03';
+import { scrapeJobright } from './jobright';
+import { REMOTE_API_SCRAPERS } from './remote-api';
 import type { RawJob } from './greenhouse';
 import { classifyJob } from '../classify-job';
+import { isSeniorForNewGrad } from '../seniority';
 import { isNonUsLocation } from './_http';
 
 export interface ScraperTarget {
-  source: 'greenhouse' | 'lever' | 'ashby' | 'workday' | 'simplify' | 'workable' | 'themuse' | 'smartrecruiters';
+  source: 'greenhouse' | 'lever' | 'ashby' | 'workday' | 'simplify' | 'workable' | 'themuse' | 'smartrecruiters' | 'vanshb03' | 'jobright' | 'remotive' | 'remoteok' | 'jobicy';
   company: string;
   slug?: string;
   tenant?: string;
@@ -45,6 +49,7 @@ export async function scrapeAll(config: ScrapeConfig, existingRunId?: string): P
 
   let jobsFound = 0;
   let jobsNew = 0;
+  let jobsSkipped = 0;
   let error: string | null = null;
 
   try {
@@ -71,6 +76,12 @@ export async function scrapeAll(config: ScrapeConfig, existingRunId?: string): P
             results = await scrapeTheMuse();
           } else if (target.source === 'smartrecruiters' && target.slug) {
             results = await scrapeSmartRecruiters({ company: target.company, slug: target.slug, titleFilter: target.titleFilter, locationFilter: target.locationFilter });
+          } else if (target.source === 'vanshb03') {
+            results = await scrapeVansh();
+          } else if (target.source === 'jobright') {
+            results = await scrapeJobright();
+          } else if (target.source in REMOTE_API_SCRAPERS) {
+            results = await REMOTE_API_SCRAPERS[target.source]();
           }
 
           // Empty boards return HTTP 200 on Lever/Ashby/SmartRecruiters, so
@@ -106,6 +117,13 @@ export async function scrapeAll(config: ScrapeConfig, existingRunId?: string): P
       }
       if (job.hints?.entry && cls.entry_level === null) cls.entry_level = 1;
 
+      // New-grad focus: never store clearly-senior roles (3+/8+ years, senior
+      // JD tells). Undetermined roles are kept.
+      if (isSeniorForNewGrad(cls.entry_level, cls.years_required)) {
+        jobsSkipped++;
+        continue;
+      }
+
       try {
         await db.insert(jobs).values({
           id,
@@ -132,6 +150,8 @@ export async function scrapeAll(config: ScrapeConfig, existingRunId?: string): P
         // UNIQUE constraint — already exists, skip
       }
     }
+
+    console.log(`[scraper] ${jobsNew} new, ${jobsSkipped} senior roles skipped (of ${jobsFound} US postings)`);
 
     await db.update(scrape_runs)
       .set({ status: 'completed', completed_at: new Date().toISOString(), jobs_found: jobsFound, jobs_new: jobsNew })

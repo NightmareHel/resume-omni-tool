@@ -21,14 +21,22 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     return new Response(JSON.stringify({ error: 'Profile not found' }), { status: 400 });
   }
 
-  const pdfBuffer = await generateResumePDF(app.resume_text, prof);
-  const pdf = new Uint8Array(pdfBuffer);
+  try {
+    const pdfBuffer = await generateResumePDF(app.resume_text, prof);
+    const pdf = new Uint8Array(pdfBuffer);
 
-  return new Response(pdf, {
-    headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="resume-${id.slice(0, 8)}.pdf"`,
-      'Content-Length': String(pdfBuffer.length),
-    },
-  });
+    return new Response(pdf, {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `inline; filename="resume-${id.slice(0, 8)}.pdf"`,
+        'Content-Length': String(pdfBuffer.length),
+      },
+    });
+  } catch (err) {
+    console.error('Resume PDF generation failed:', err);
+    return new Response(JSON.stringify({ error: 'PDF generation failed' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 }

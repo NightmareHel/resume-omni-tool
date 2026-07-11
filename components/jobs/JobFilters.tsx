@@ -38,6 +38,11 @@ export default function JobFilters({ filters, onChange }: Props) {
           <option value="themuse">The Muse</option>
           <option value="workable">Workable</option>
           <option value="smartrecruiters">SmartRecruiters</option>
+          <option value="vanshb03">vanshb03 Feed</option>
+          <option value="jobright">Jobright Feed</option>
+          <option value="remotive">Remotive</option>
+          <option value="remoteok">RemoteOK</option>
+          <option value="jobicy">Jobicy</option>
           <option value="custom">Custom</option>
         </select>
       </div>

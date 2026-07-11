@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { jobs, profile, applications } from '@/lib/schema';
 import { eq, and } from 'drizzle-orm';
-import { analyzeKeywordGap, rewriteResume, generateCoverLetter } from '@/lib/claude';
+import { analyzeKeywordGap, tailorResume, generateCoverLetter } from '@/lib/claude';
 import { uuid } from '@/lib/ids';
 import { profileToResumeText } from '@/lib/profile-formatter';
+import { fitResumeText } from '@/lib/resume-pdf';
 
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -45,12 +46,12 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
       };
 
       try {
-        const [keywordGap, rewrite, coverLetter] = await Promise.all([
+        const [keywordGap, tailoring, coverLetter] = await Promise.all([
           analyzeKeywordGap(resumeText, jdText).then((r) => {
             send({ type: 'stage', stage: 'gap', status: 'done' });
             return r;
           }),
-          rewriteResume(resumeText, jdText).then((r) => {
+          tailorResume(prof, jdText).then((r) => {
             send({ type: 'stage', stage: 'rewrite', status: 'done' });
             return r;
           }),
@@ -62,7 +63,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
           }),
         ]);
 
-        const tailoredResume = rewrite.sections.map((s) => `${s.name.toUpperCase()}\n${s.rewritten}`).join('\n\n');
+        const tailoredResume = await fitResumeText(prof, tailoring);
         const now = new Date().toISOString();
 
         await db.insert(applications).values({
@@ -78,7 +79,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 
         const [application] = await db.select().from(applications).where(eq(applications.job_id, id));
 
-        send({ type: 'done', application, keywordGap, rewrite, coverLetter });
+        send({ type: 'done', application, keywordGap, tailoring, coverLetter });
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         console.error('[tailor] AI error:', msg);

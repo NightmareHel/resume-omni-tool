@@ -1,0 +1,1 @@
+ALTER TABLE `applications` ADD `interview_prep` text;

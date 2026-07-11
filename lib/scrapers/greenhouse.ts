@@ -8,7 +8,7 @@ export interface ScraperConfig {
 }
 
 export interface RawJob {
-  source: 'greenhouse' | 'lever' | 'ashby' | 'workday' | 'custom' | 'simplify' | 'workable' | 'themuse' | 'smartrecruiters';
+  source: 'greenhouse' | 'lever' | 'ashby' | 'workday' | 'custom' | 'simplify' | 'workable' | 'themuse' | 'smartrecruiters' | 'vanshb03' | 'jobright' | 'remotive' | 'remoteok' | 'jobicy';
   external_id: string;
   title: string;
   company: string;

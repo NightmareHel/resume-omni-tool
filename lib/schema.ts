@@ -43,6 +43,7 @@ export const applications = sqliteTable('applications', {
   screenshot_path:   text('screenshot_path'),
   notes:             text('notes'),
   keyword_gap:       text('keyword_gap'), // JSON KeywordGapResult from tailor
+  interview_prep:    text('interview_prep'), // JSON InterviewPrepResult, generated on demand
   created_at:        text('created_at').notNull(),
   updated_at:        text('updated_at').notNull(),
 });
@@ -75,6 +76,7 @@ export const profile = sqliteTable('profile', {
   portfolio_url:     text('portfolio_url'),
   summary:           text('summary'),
   experience:        text('experience'),
+  projects:          text('projects'),
   education:         text('education'),
   skills:            text('skills'),
   target_roles:      text('target_roles'),

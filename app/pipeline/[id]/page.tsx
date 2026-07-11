@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useToast } from '@/lib/toast';
 import { TRANSITIONS } from '@/lib/application-state';
-import type { KeywordGapResult, CritiqueResult } from '@/lib/claude';
+import type { KeywordGapResult, CritiqueResult, InterviewPrepResult } from '@/lib/claude';
 
 interface Application {
   id: string;
@@ -14,6 +14,7 @@ interface Application {
   resume_text: string | null;
   cover_letter: string | null;
   keyword_gap: string | null;
+  interview_prep: string | null;
   notes: string | null;
   created_at: string;
   applied_at: string | null;
@@ -36,7 +37,7 @@ interface Job {
   years_required: number | null;
 }
 
-type Tab = 'resume' | 'cover' | 'quality' | 'activity';
+type Tab = 'resume' | 'cover' | 'quality' | 'prep' | 'activity';
 type DocView = 'resume' | 'cover';
 
 const SPONSOR_STYLES: Record<string, { cls: string; label: (lca: number | null) => string }> = {
@@ -79,6 +80,7 @@ export default function ApplicationDetailPage() {
   const [tab, setTab] = useState<Tab>('resume');
   const [docView, setDocView] = useState<DocView>('resume');
   const [cacheKey, setCacheKey] = useState(0);
+  const [pdfLoading, setPdfLoading] = useState(true);
 
   // Editor state
   const [resumeText, setResumeText] = useState('');
@@ -88,6 +90,10 @@ export default function ApplicationDetailPage() {
   // Quality tab
   const [critique, setCritique] = useState<CritiqueResult | null>(null);
   const [critiquing, setCritiquing] = useState(false);
+
+  // Prep tab
+  const [prep, setPrep] = useState<InterviewPrepResult | null>(null);
+  const [prepping, setPrepping] = useState(false);
 
   // Re-tailor
   const [retailoring, setRetailoring] = useState(false);
@@ -108,6 +114,9 @@ export default function ApplicationDetailPage() {
       setResumeText(data.application.resume_text ?? '');
       setCoverText(data.application.cover_letter ?? '');
       setNotes(data.application.notes ?? '');
+      if (data.application.interview_prep) {
+        try { setPrep(JSON.parse(data.application.interview_prep)); } catch {}
+      }
     } catch {
       addToast('Failed to load application', 'error');
     } finally {
@@ -116,6 +125,10 @@ export default function ApplicationDetailPage() {
   }, [id, router, addToast]);
 
   useEffect(() => { load(); }, [load]);
+
+  // The iframe remounts (key={docView-cacheKey}) whenever the PDF src changes;
+  // reset the loading overlay so it shows again until the new PDF finishes.
+  useEffect(() => { setPdfLoading(true); }, [docView, cacheKey]);
 
   const patch = async (body: Record<string, string | null>) => {
     const res = await fetch(`/api/applications/${id}`, {
@@ -205,6 +218,21 @@ export default function ApplicationDetailPage() {
     } finally {
       setRetailoring(false);
       setRetailorLabel(null);
+    }
+  };
+
+  const handlePrep = async (force = false) => {
+    setPrepping(true);
+    try {
+      const res = await fetch(`/api/applications/${id}/interview-prep${force ? '?force=true' : ''}`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) { addToast(data.error ?? 'Prep generation failed', 'error'); return; }
+      setPrep(data.prep);
+      if (!data.cached) addToast('Interview prep generated', 'success');
+    } catch {
+      addToast('Prep generation failed', 'error');
+    } finally {
+      setPrepping(false);
     }
   };
 
@@ -315,10 +343,17 @@ export default function ApplicationDetailPage() {
           </div>
           <div className="flex-1 p-2 bg-zinc-800/30">
             <div className="h-full rounded-lg bg-white/5 ring-1 ring-white/10 p-1.5">
-              <div className="h-full rounded bg-zinc-900/80 ring-1 ring-white/5 overflow-hidden">
+              <div className="relative h-full rounded bg-zinc-900/80 ring-1 ring-white/5 overflow-hidden">
+                {pdfLoading && (
+                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-zinc-900">
+                    <div className="h-6 w-6 rounded-full border-2 border-zinc-700 border-t-emerald-500 animate-spin" />
+                    <p className="text-xs text-zinc-500">Generating {docView === 'resume' ? 'resume' : 'cover letter'} PDF...</p>
+                  </div>
+                )}
                 <iframe
                   key={`${docView}-${cacheKey}`}
                   src={pdfSrc}
+                  onLoad={() => setPdfLoading(false)}
                   className="w-full h-full"
                   title={docView === 'resume' ? 'Resume PDF' : 'Cover Letter PDF'}
                 />
@@ -331,15 +366,18 @@ export default function ApplicationDetailPage() {
         <div className="w-1/2 flex flex-col overflow-hidden">
           {/* Tab bar */}
           <div className="flex border-b border-zinc-800 bg-zinc-900/30">
-            {(['resume', 'cover', 'quality', 'activity'] as Tab[]).map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`px-4 py-2.5 text-xs font-medium capitalize transition-colors border-b-2 ${tab === t ? 'text-emerald-400 border-emerald-500' : 'text-zinc-400 hover:text-zinc-200 border-transparent'}`}
-              >
-                {t === 'quality' ? 'Quality' : t === 'activity' ? 'Activity' : t === 'cover' ? 'Cover Letter' : 'Resume'}
-              </button>
-            ))}
+            {(['resume', 'cover', 'quality', 'prep', 'activity'] as Tab[]).map((t) => {
+              const prepNudge = t === 'prep' && (app.status === 'screen' || app.status === 'interview');
+              return (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className={`px-4 py-2.5 text-xs font-medium capitalize transition-colors border-b-2 ${tab === t ? 'text-emerald-400 border-emerald-500' : prepNudge ? 'text-amber-400 hover:text-amber-300 border-transparent' : 'text-zinc-400 hover:text-zinc-200 border-transparent'}`}
+                >
+                  {t === 'quality' ? 'Quality' : t === 'activity' ? 'Activity' : t === 'cover' ? 'Cover Letter' : t === 'prep' ? `Prep${prepNudge ? ' !' : ''}` : 'Resume'}
+                </button>
+              );
+            })}
           </div>
 
           <div className="flex-1 overflow-y-auto p-4">
@@ -466,21 +504,96 @@ export default function ApplicationDetailPage() {
               </div>
             )}
 
+            {/* Prep tab */}
+            {tab === 'prep' && (
+              <div className="flex flex-col gap-5">
+                <div className="flex items-center gap-3">
+                  <h3 className="text-sm font-semibold text-zinc-200">Interview Prep</h3>
+                  <button
+                    onClick={() => handlePrep(!!prep)}
+                    disabled={prepping}
+                    className="text-xs bg-zinc-700 hover:bg-zinc-600 text-zinc-200 px-3 py-1 rounded-lg disabled:opacity-50 transition-colors"
+                  >
+                    {prepping ? 'Generating...' : prep ? 'Regenerate' : 'Generate Prep'}
+                  </button>
+                </div>
+
+                {!prep && !prepping && (
+                  <p className="text-zinc-500 text-xs">
+                    Generates likely interview questions, STAR guidance from your real background, and talking points mapped to this JD.
+                  </p>
+                )}
+
+                {prep && (
+                  <div className="flex flex-col gap-6">
+                    <div>
+                      <h4 className="text-xs font-semibold text-emerald-400 uppercase tracking-wide mb-2">Technical Questions</h4>
+                      <div className="flex flex-col gap-2">
+                        {prep.technical.map((q, i) => (
+                          <div key={i} className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2">
+                            <p className="text-xs text-zinc-200 font-medium mb-1">{q.question}</p>
+                            <p className="text-xs text-zinc-500">{q.guidance}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-semibold text-cyan-400 uppercase tracking-wide mb-2">Behavioral Questions</h4>
+                      <div className="flex flex-col gap-2">
+                        {prep.behavioral.map((q, i) => (
+                          <div key={i} className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2">
+                            <p className="text-xs text-zinc-200 font-medium mb-1">{q.question}</p>
+                            <p className="text-xs text-zinc-500">{q.guidance}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-semibold text-violet-400 uppercase tracking-wide mb-2">Questions to Ask Them</h4>
+                      <ul className="flex flex-col gap-1.5 list-disc list-inside">
+                        {prep.questions_to_ask.map((q, i) => (
+                          <li key={i} className="text-xs text-zinc-300">{q}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-semibold text-amber-400 uppercase tracking-wide mb-2">Talking Points</h4>
+                      <ul className="flex flex-col gap-1.5 list-disc list-inside">
+                        {prep.talking_points.map((q, i) => (
+                          <li key={i} className="text-xs text-zinc-300">{q}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Activity tab */}
             {tab === 'activity' && (
               <div className="flex flex-col gap-5">
                 <div>
                   <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-3">Status</h3>
                   <div className="flex flex-wrap gap-2">
+                    {(app.status === 'draft' || app.status === 'pending') && (
+                      <button
+                        onClick={() => handleStatusChange('submitted')}
+                        className="text-xs bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg transition-colors"
+                        title="I submitted this by hand — record it as submitted"
+                      >
+                        Mark Submitted
+                      </button>
+                    )}
                     {app.status === 'draft' && (
                       <button
                         onClick={() => handleStatusChange('pending')}
-                        className="text-xs bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg transition-colors"
+                        className="text-xs bg-zinc-700 hover:bg-zinc-600 text-zinc-200 px-3 py-1.5 rounded-lg transition-colors"
+                        title="Queue for the auto-apply worker (must be running separately)"
                       >
                         Approve and Queue
                       </button>
                     )}
-                    {allowed.filter((s) => s !== 'pending').map((s) => (
+                    {allowed.filter((s) => s !== 'pending' && s !== 'submitted').map((s) => (
                       <button
                         key={s}
                         onClick={() => handleStatusChange(s)}

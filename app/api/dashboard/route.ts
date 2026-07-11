@@ -21,6 +21,7 @@ export async function GET() {
       job_id: applications.job_id,
       status: applications.status,
       created_at: applications.created_at,
+      applied_at: applications.applied_at,
     }).from(applications),
   ]);
 
@@ -46,6 +47,32 @@ export async function GET() {
   // This-week applications (non-draft)
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
   const thisWeek = allApps.filter((a) => a.status !== 'draft' && a.created_at >= weekAgo).length;
+
+  // Velocity: submissions per week (applied_at), response rate, time-to-submit
+  const DAY = 24 * 60 * 60 * 1000;
+  const twoWeeksAgo = new Date(Date.now() - 14 * DAY).toISOString();
+  const submittedApps = allApps.filter((a) => a.applied_at);
+  const submittedThisWeek = submittedApps.filter((a) => a.applied_at! >= weekAgo).length;
+  const submittedLastWeek = submittedApps.filter((a) => a.applied_at! >= twoWeeksAgo && a.applied_at! < weekAgo).length;
+
+  // 6 weekly buckets, oldest first
+  const weeklySubmissions: number[] = Array.from({ length: 6 }, (_, i) => {
+    const start = new Date(Date.now() - (6 - i) * 7 * DAY).toISOString();
+    const end = new Date(Date.now() - (5 - i) * 7 * DAY).toISOString();
+    return submittedApps.filter((a) => a.applied_at! >= start && a.applied_at! < end).length;
+  });
+
+  const RESPONDED = new Set(['replied', 'screen', 'interview', 'offer']);
+  const responded = allApps.filter((a) => RESPONDED.has(a.status)).length;
+  const totalSubmitted = submittedApps.length;
+  const responseRate = totalSubmitted > 0 ? Math.round((responded / totalSubmitted) * 100) : null;
+
+  const submitLags = submittedApps
+    .map((a) => (new Date(a.applied_at!).getTime() - new Date(a.created_at).getTime()) / DAY)
+    .filter((d) => d >= 0);
+  const avgDaysToSubmit = submitLags.length > 0
+    ? Math.round((submitLags.reduce((s, d) => s + d, 0) / submitLags.length) * 10) / 10
+    : null;
 
   // Action queue
   const manualRequired = await db
@@ -74,6 +101,14 @@ export async function GET() {
     drafts: funnel.draft,
     interviews: funnel.interview,
     applicationsThisWeek: thisWeek,
+    velocity: {
+      submittedThisWeek,
+      submittedLastWeek,
+      weeklySubmissions,
+      totalSubmitted,
+      responseRate,
+      avgDaysToSubmit,
+    },
     actionQueue: { manualRequired, staleDrafts, topUnscored },
   });
 }

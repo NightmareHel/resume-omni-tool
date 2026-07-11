@@ -54,6 +54,17 @@ export function extractYearsRequired(jdText: string): number | null {
   return max;
 }
 
+// Drop rule for this new-grad-focused pipeline: exclude clearly-senior roles.
+// entry_level === 0 already means senior (classifySeniority marks it false when
+// 3+ years are required or the JD has senior tells); the years check is an
+// explicit guard for the 3+/8+ year postings the user does not want to see.
+// entry_level === null (undetermined) is kept — only clear seniors are cut.
+export function isSeniorForNewGrad(entryLevel: number | null, yearsRequired: number | null): boolean {
+  if (entryLevel === 0) return true;
+  if (yearsRequired !== null && yearsRequired >= 3) return true;
+  return false;
+}
+
 export function classifySeniority(title: string, jdText: string | null | undefined): SeniorityVerdict {
   const text = jdText ?? '';
   const yearsRequired = text ? extractYearsRequired(text) : null;

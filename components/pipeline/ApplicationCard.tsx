@@ -30,6 +30,7 @@ interface Props {
   job: Job | null;
   onStatusChange: (id: string, status: string, notes?: string) => void;
   onApprove: (id: string) => void;
+  onRemove: (id: string) => void;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -60,7 +61,7 @@ function keywordScore(kwJson: string | null): number | null {
   catch { return null; }
 }
 
-export default function ApplicationCard({ application, job, onApprove }: Props) {
+export default function ApplicationCard({ application, job, onStatusChange, onRemove }: Props) {
   const kwScore = keywordScore(application.keyword_gap);
   const sponsor = job?.sponsor_status;
 
@@ -103,10 +104,11 @@ export default function ApplicationCard({ application, job, onApprove }: Props) 
       <div className="border-t border-zinc-800 px-3 py-2 flex items-center gap-2">
         {application.status === 'draft' && (
           <button
-            onClick={() => onApprove(application.id)}
+            onClick={() => onStatusChange(application.id, 'submitted')}
             className="text-xs bg-emerald-700 hover:bg-emerald-600 text-white px-2.5 py-1 rounded-lg transition-colors"
+            title="I submitted this by hand — move to submitted"
           >
-            Approve
+            Mark Submitted
           </button>
         )}
         {application.resume_text && (
@@ -119,6 +121,26 @@ export default function ApplicationCard({ application, job, onApprove }: Props) 
           >
             PDF
           </a>
+        )}
+        {job?.url && (
+          <a
+            href={job.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+            title="Open original job posting"
+          >
+            Job
+          </a>
+        )}
+        {application.status === 'draft' && (
+          <button
+            onClick={() => { if (confirm('Remove this draft? This cannot be undone.')) onRemove(application.id); }}
+            className="text-xs text-zinc-500 hover:text-red-400 transition-colors"
+            title="Remove draft"
+          >
+            Remove
+          </button>
         )}
         <Link
           href={`/pipeline/${application.id}`}

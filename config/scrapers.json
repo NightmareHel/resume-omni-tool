@@ -2117,13 +2117,950 @@
       "source": "smartrecruiters",
       "company": "ServiceNow",
       "slug": "servicenow",
-      "titleFilter": ["engineer", "developer", "software", "machine learning", "data scientist", "devops"]
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "data scientist",
+        "devops"
+      ]
     },
     {
       "source": "smartrecruiters",
       "company": "Visa",
       "slug": "visa",
-      "titleFilter": ["engineer", "developer", "software", "machine learning", "data scientist", "devops"]
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "data scientist",
+        "devops"
+      ]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Riot Games",
+      "slug": "riotgames",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Klaviyo",
+      "slug": "klaviyo",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Attentive",
+      "slug": "attentive",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Gusto",
+      "slug": "gusto",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Checkr",
+      "slug": "checkr",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "greenhouse",
+      "company": "LaunchDarkly",
+      "slug": "launchdarkly",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Mercury",
+      "slug": "mercury",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Block",
+      "slug": "block",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Marqeta",
+      "slug": "marqeta",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "greenhouse",
+      "company": "New Relic",
+      "slug": "newrelic",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Remote.com",
+      "slug": "remotecom",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Flexport",
+      "slug": "flexport",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Zscaler",
+      "slug": "zscaler",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Lightmatter",
+      "slug": "lightmatter",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "greenhouse",
+      "company": "SambaNova",
+      "slug": "sambanovasystems",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Zocdoc",
+      "slug": "zocdoc",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "greenhouse",
+      "company": "Carta",
+      "slug": "carta",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "greenhouse",
+      "company": "GoFundMe",
+      "slug": "gofundme",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "Eight Sleep",
+      "slug": "eightsleep",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "Browserbase",
+      "slug": "browserbase",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "LangChain",
+      "slug": "langchain",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "Baseten",
+      "slug": "baseten",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "Deepgram",
+      "slug": "deepgram",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "Suno",
+      "slug": "suno",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "Krea",
+      "slug": "krea",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "Cerebras",
+      "slug": "cerebras",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "Etched",
+      "slug": "etched",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "Mercor",
+      "slug": "mercor",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "Granola",
+      "slug": "granola",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "Warp",
+      "slug": "warp",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "Railway",
+      "slug": "railway",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "Render",
+      "slug": "render",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "WorkOS",
+      "slug": "workos",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "Decagon",
+      "slug": "decagon",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "OpenRouter",
+      "slug": "openrouter",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "Ideogram",
+      "slug": "ideogram",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "Weaviate",
+      "slug": "weaviate",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "Pinecone",
+      "slug": "pinecone",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "Runway",
+      "slug": "runway",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "Zed",
+      "slug": "zed",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "Neon",
+      "slug": "neon",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "Axiom",
+      "slug": "axiom",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "ashby",
+      "company": "Resend",
+      "slug": "resend",
+      "titleFilter": [
+        "engineer",
+        "developer",
+        "software",
+        "machine learning",
+        "artificial intelligence",
+        "data scientist",
+        "data analyst",
+        "scientist",
+        "sdet",
+        "qa",
+        "solutions",
+        "technical program",
+        "technical product",
+        "devops"
+      ]
+    },
+    {
+      "source": "vanshb03",
+      "company": "vanshb03 New-Grad Feed"
+    },
+    {
+      "source": "jobright",
+      "company": "Jobright New-Grad SWE Feed"
+    },
+    {
+      "source": "remotive",
+      "company": "Remotive (Remote Dev)"
+    },
+    {
+      "source": "remoteok",
+      "company": "RemoteOK (Remote Dev)"
+    },
+    {
+      "source": "jobicy",
+      "company": "Jobicy (Remote Dev)"
     }
   ]
 }

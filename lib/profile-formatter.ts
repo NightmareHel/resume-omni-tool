@@ -48,6 +48,41 @@ function fmtDate(s: string | null | undefined): string {
   return `${MONTHS[mi] ?? m[2]} ${m[1]}`;
 }
 
+// Graduation date: prefixes "Expected" when the YYYY-MM end date is the current
+// month or later (degree not yet conferred). Past/blank dates pass through.
+function fmtGradDate(s: string | null | undefined): string {
+  const formatted = fmtDate(s);
+  if (!formatted) return '';
+  const m = /^(\d{4})-(\d{2})$/.exec((s ?? '').trim());
+  if (!m) return formatted;
+  const now = new Date();
+  const nowKey = now.getFullYear() * 12 + now.getMonth();
+  const endKey = parseInt(m[1], 10) * 12 + (parseInt(m[2], 10) - 1);
+  return endKey >= nowKey ? `Expected ${formatted}` : formatted;
+}
+
+// Groups a flat skills list into ordered, labeled lines for the resume. Unknown
+// skills fall into "Additional" so nothing is silently dropped.
+const SKILL_GROUPS: { label: string; members: string[] }[] = [
+  { label: 'AI/ML', members: ['LangChain', 'LangGraph', 'Groq API', 'Claude API (Anthropic)', 'Gemini API', 'scikit-learn', 'Multi-agent systems', 'RAG pipelines', 'Vector embeddings', 'ML pipeline engineering', 'Prompt engineering', 'Gradient Boosting', 'pandas'] },
+  { label: 'Languages', members: ['Python', 'TypeScript', 'JavaScript', 'Java', 'SQL'] },
+  { label: 'Frameworks & Backend', members: ['Next.js', 'React', 'React Native', 'Node.js', 'Express', 'FastAPI', 'Flask', 'Streamlit', 'REST APIs', 'SSE streaming', 'Drizzle ORM', 'SQLite', 'PostgreSQL'] },
+  { label: 'Tools & Infra', members: ['Playwright', 'Git', 'GitHub', 'Vercel', 'Google Maps API', 'Canvas API', 'OAuth 2.0'] },
+];
+
+function groupSkills(skills: string[]): string[] {
+  const assigned = new Set<string>();
+  const lines: string[] = [];
+  for (const g of SKILL_GROUPS) {
+    const found = g.members.filter((m) => skills.includes(m));
+    for (const m of found) assigned.add(m);
+    if (found.length > 0) lines.push(`${g.label}: ${found.join(', ')}`);
+  }
+  const rest = skills.filter((s) => !assigned.has(s));
+  if (rest.length > 0) lines.push(`Additional: ${rest.join(', ')}`);
+  return lines;
+}
+
 function pickBullets(original: string[] | undefined, tailored: string[] | undefined, cap: number): string[] {
   const src = tailored && tailored.some((b) => b.trim()) ? tailored : (original ?? []);
   return src.map((b) => b.trim()).filter(Boolean).slice(0, cap);
@@ -112,7 +147,7 @@ export function buildResumeText(p: ProfileRow, opts: BuildOpts = {}): string {
   if (edu.length > 0) {
     const lines = ['EDUCATION'];
     for (const e of edu) {
-      lines.push([e.degree, e.school, fmtDate(e.end), e.gpa].filter(Boolean).join(' | '));
+      lines.push([e.degree, e.school, fmtGradDate(e.end), e.gpa].filter(Boolean).join(' | '));
       if (e.details) lines.push(e.details);
     }
     blocks.push(lines.join('\n'));
@@ -121,7 +156,7 @@ export function buildResumeText(p: ProfileRow, opts: BuildOpts = {}): string {
   const skills = safeParseArray<string>(p.skills);
   if (skills.length > 0) {
     const chosen = opts.skillLimit ? skills.slice(0, opts.skillLimit) : skills;
-    blocks.push(`SKILLS\n${chosen.join(', ')}`);
+    blocks.push(`SKILLS\n${groupSkills(chosen).join('\n')}`);
   }
 
   return blocks.join('\n\n');

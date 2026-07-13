@@ -156,24 +156,23 @@ export async function tailorResume(p: ProfileRow, jdText: string): Promise<Resum
     .map((pr, i) => `[PROJ ${i}] ${pr.name}${pr.tech ? ` (${pr.tech})` : ''}\n${(pr.bullets ?? []).map((b) => `  - ${b}`).join('\n')}`)
     .join('\n\n');
 
-  const msg = await client().chat.completions.create({
-    model: MODEL,
-    max_tokens: 3072,
-    messages: [
-      {
-        role: 'user',
-        content: `You are an expert resume writer optimizing bullets for one specific job using Google's XYZ format. Return JSON only.
+  const basePrompt = `You are an expert resume writer rewriting bullets for one specific job. Return JSON only.
 
-XYZ FORMAT: every bullet must read as "Accomplished [X] as measured by [Y] by doing [Z]" — lead with the result/impact, then the method. Example: "Cut deal-review time ~40% by building an end-to-end ML pipeline over 500+ contracts."
+HOW TO WRITE A BULLET: lead with the concrete outcome or result, use a strong past-tense action verb, then name the method or technology. Include a number ONLY when the source bullet already contains one. Bullets are natural prose, not a fill-in template.
+
+GOOD: "Cut deal-review time ~40% by building an end-to-end ML pipeline over 500+ contracts."
+GOOD: "Automated recurring housing IT tickets by scripting a triage workflow, freeing staff for escalations."
+BAD (never do this): "Accomplished X as measured by Y by doing Z." — this is a pattern to internalize, never literal text to output.
 
 HARD RULES — violating any is a failure:
-1. Never fabricate experience, skills, metrics, or accomplishments. Only rephrase what already exists. If a bullet has no real metric, keep it results-first WITHOUT inventing a number.
-2. Do NOT change which roles or projects exist, their titles, companies, or dates.
-3. Return the SAME number of experience and project entries, in the SAME order, keyed by index.
-4. KEEP every bullet for each entry (do not drop any) and do not add new ones. Rephrase each into XYZ form, leading with a strong action verb and mirroring the exact terminology from the job description WHERE it truthfully applies.
-5. Keep each bullet to one line (~22 words max). Preserve any real numbers/metrics.
-6. Rewrite the professional summary (2-3 sentences) to foreground the experience and skills this JD cares about, truthfully.
-7. Rank the projects by relevance to THIS job in "projectOrder" (array of the project indices above, most relevant first, every index included exactly once).
+1. Never output the words "Accomplished", "as measured by", or "by doing", and never output a bracketed placeholder like [X], [Y], [Z], [metric], or [result]. Write real sentences.
+2. Never fabricate experience, skills, metrics, or accomplishments. Only rephrase what already exists. If a bullet has no real metric, keep it results-first WITHOUT inventing a number.
+3. Do NOT change which roles or projects exist, their titles, companies, or dates.
+4. Return the SAME number of experience and project entries, in the SAME order, keyed by index.
+5. KEEP every bullet for each entry (do not drop any) and do not add new ones. Rephrase each, leading with a strong action verb and mirroring the exact terminology from the job description WHERE it truthfully applies.
+6. Keep each bullet to one line (~22 words max). Preserve any real numbers/metrics.
+7. Rewrite the professional summary (2-3 sentences) in a grounded new-grad register: concrete and truthful. Do NOT use executive filler like "cross-organizational alignment" or claim "reliability" / "scalability" unless a bullet backs it.
+8. Rank the projects by relevance to THIS job in "projectOrder" (array of the project indices above, most relevant first, every index included exactly once).
 
 JOB DESCRIPTION:
 ${jdText}
@@ -194,14 +193,45 @@ Return ONLY valid JSON in this exact shape (bullets are plain strings, no leadin
   "projects": [ { "bullets": ["rewritten bullet"] } ],
   "projectOrder": [0, 2, 1]
 }
-The experience array must have exactly ${exp.length} item(s) and projects exactly ${projects.length} item(s), index-aligned to the lists above. projectOrder must be a permutation of 0..${projects.length - 1}.`,
-      },
-    ],
-  });
+The experience array must have exactly ${exp.length} item(s) and projects exactly ${projects.length} item(s), index-aligned to the lists above. projectOrder must be a permutation of 0..${projects.length - 1}.`;
 
-  const content = msg.choices[0].message.content;
-  if (!content) throw new Error('Empty model response');
-  const raw = extractJSON(content) as ResumeTailoring;
+  const generate = async (strict: boolean): Promise<ResumeTailoring> => {
+    const content_ = strict
+      ? `${basePrompt}\n\nSTRICT RETRY: your previous attempt leaked template placeholders or the banned formula words. Output natural prose bullets only, with no brackets and none of the banned words.`
+      : basePrompt;
+    const msg = await client().chat.completions.create({
+      model: MODEL,
+      max_tokens: 3072,
+      messages: [{ role: 'user', content: content_ }],
+    });
+    const content = msg.choices[0].message.content;
+    if (!content) throw new Error('Empty model response');
+    return extractJSON(content) as ResumeTailoring;
+  };
+
+  // Detects scaffold/template leakage in a generated string.
+  const looksLikeScaffold = (text: string): boolean =>
+    /accomplished\s+\[?x/i.test(text) ||
+    /as measured by/i.test(text) ||
+    /\bby doing\b/i.test(text) ||
+    /\[(x|y|z|metric|result|method|number)\]/i.test(text);
+
+  const scaffolded = (r: ResumeTailoring): boolean => {
+    const bullets = [
+      ...(r.experience ?? []).flatMap((e) => e.bullets ?? []),
+      ...(r.projects ?? []).flatMap((pr) => pr.bullets ?? []),
+    ];
+    return bullets.some(looksLikeScaffold) || (typeof r.summary === 'string' && looksLikeScaffold(r.summary));
+  };
+
+  let raw = await generate(false);
+  if (scaffolded(raw)) raw = await generate(true);
+  // If it still leaks, drop the offending fields so buildResumeText falls back
+  // to the original clean profile bullets/summary. Scaffold never ships.
+  const summaryBad = typeof raw.summary === 'string' && looksLikeScaffold(raw.summary);
+  const expBad = (raw.experience ?? []).some((e) => (e.bullets ?? []).some(looksLikeScaffold));
+  const projBad = (raw.projects ?? []).some((pr) => (pr.bullets ?? []).some(looksLikeScaffold));
+
   const order = Array.isArray(raw.projectOrder)
     ? raw.projectOrder.filter((n) => Number.isInteger(n) && n >= 0 && n < projects.length)
     : [];
@@ -209,9 +239,9 @@ The experience array must have exactly ${exp.length} item(s) and projects exactl
   const seen = new Set(order);
   for (let i = 0; i < projects.length; i++) if (!seen.has(i)) order.push(i);
   return {
-    summary: typeof raw.summary === 'string' ? raw.summary : undefined,
-    experience: Array.isArray(raw.experience) ? raw.experience : undefined,
-    projects: Array.isArray(raw.projects) ? raw.projects : undefined,
+    summary: !summaryBad && typeof raw.summary === 'string' ? raw.summary : undefined,
+    experience: !expBad && Array.isArray(raw.experience) ? raw.experience : undefined,
+    projects: !projBad && Array.isArray(raw.projects) ? raw.projects : undefined,
     projectOrder: order,
   };
 }

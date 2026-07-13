@@ -6,7 +6,7 @@ interface Props {
 }
 
 function getColor(score: number): string {
-  if (score >= 80) return '#10b981'; // emerald-500
+  if (score >= 80) return '#15803d'; // green-700
   if (score >= 60) return '#f59e0b'; // amber-500
   return '#ef4444'; // red-500
 }

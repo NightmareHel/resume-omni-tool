@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { motion } from 'motion/react';
+import { EASE } from '@/lib/ui';
 
 const LINKS = [
   { href: '/',         label: 'Dashboard' },
@@ -15,21 +17,29 @@ const LINKS = [
 export default function Navbar() {
   const path = usePathname();
   return (
-    <nav className="bg-zinc-950 border-b border-zinc-800 px-6 py-3 flex items-center gap-1">
-      <span className="text-zinc-100 font-bold text-sm tracking-wide mr-5">JobPilot</span>
-      {LINKS.map(({ href, label }) => (
-        <Link
-          key={href}
-          href={href}
-          className={`text-sm font-medium px-3 py-1.5 rounded-lg transition-colors ${
-            path === href || (href !== '/' && path.startsWith(href))
-              ? 'text-emerald-400 bg-emerald-950/50'
-              : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60'
-          }`}
-        >
-          {label}
-        </Link>
-      ))}
+    <nav className="sticky top-0 z-40 bg-quartz/85 backdrop-blur-md border-b border-seam px-6 h-14 flex items-center gap-1">
+      <span className="text-graphite font-bold text-sm tracking-tight mr-6">JobPilot</span>
+      {LINKS.map(({ href, label }) => {
+        const active = path === href || (href !== '/' && path.startsWith(href));
+        return (
+          <Link
+            key={href}
+            href={href}
+            className={`relative text-sm font-medium px-3 py-2 transition-colors ${
+              active ? 'text-bronze-strong' : 'text-stone hover:text-graphite'
+            }`}
+          >
+            {label}
+            {active && (
+              <motion.span
+                layoutId="nav-underline"
+                transition={{ duration: 0.3, ease: EASE }}
+                className="absolute left-3 right-3 -bottom-[1px] h-[2px] bg-bronze rounded-full"
+              />
+            )}
+          </Link>
+        );
+      })}
     </nav>
   );
 }

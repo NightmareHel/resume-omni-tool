@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence, LayoutGroup } from 'motion/react';
 import ApplicationCard from './ApplicationCard';
+import { STATUS_DOT } from '@/lib/ui';
 
 interface Application {
   id: string;
@@ -36,18 +37,6 @@ interface Props {
 
 const COLUMNS = ['draft', 'pending', 'submitted', 'replied', 'screen', 'interview', 'offer', 'rejected', 'withdrawn'];
 
-const COLUMN_COLORS: Record<string, string> = {
-  draft:     'border-zinc-600',
-  pending:   'border-amber-700',
-  submitted: 'border-blue-700',
-  replied:   'border-violet-700',
-  screen:    'border-cyan-700',
-  interview: 'border-indigo-700',
-  offer:     'border-emerald-600',
-  rejected:  'border-red-800',
-  withdrawn: 'border-zinc-700',
-};
-
 export default function KanbanBoard({ applications, jobs, onStatusChange, onApprove, onRemove }: Props) {
   const byStatus: Record<string, Application[]> = {};
   for (const col of COLUMNS) byStatus[col] = [];
@@ -64,10 +53,11 @@ export default function KanbanBoard({ applications, jobs, onStatusChange, onAppr
     <LayoutGroup>
       <div className="flex gap-4 overflow-x-auto pb-4">
         {nonEmpty.map((col) => (
-          <div key={col} className="flex-shrink-0 w-64">
-            <div className={`border-t-2 ${COLUMN_COLORS[col]} mb-3 pt-2`}>
-              <h3 className="text-zinc-400 text-xs font-semibold uppercase tracking-wide">
-                {col.replace('_', ' ')} <span className="text-zinc-600 tabular-nums">({byStatus[col].length})</span>
+          <div key={col} className="flex-shrink-0 w-64 bg-sunken rounded-[14px] p-2">
+            <div className="flex items-center gap-2 px-1.5 py-2">
+              <span className={`w-2 h-2 rounded-full ${STATUS_DOT[col] ?? 'bg-stone-400'}`} />
+              <h3 className="font-mono text-[11px] uppercase tracking-[0.14em] text-stone">
+                {col.replace('_', ' ')} <span className="text-faint tabular-nums">({byStatus[col].length})</span>
               </h3>
             </div>
             <div className="flex flex-col gap-2">
@@ -93,7 +83,7 @@ export default function KanbanBoard({ applications, jobs, onStatusChange, onAppr
                 ))}
               </AnimatePresence>
               {byStatus[col].length === 0 && (
-                <p className="text-zinc-700 text-xs px-1">Empty</p>
+                <p className="text-faint text-xs px-1.5 pb-1">Empty</p>
               )}
             </div>
           </div>

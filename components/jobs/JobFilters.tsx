@@ -23,9 +23,9 @@ export default function JobFilters({ filters, onChange }: Props) {
   return (
     <div className="flex flex-wrap gap-3 items-end">
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-zinc-500 uppercase tracking-wide">Source</label>
+        <label className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">Source</label>
         <select
-          className="bg-zinc-900 border border-zinc-700 text-zinc-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-600"
+          className="bg-surface border border-seam text-graphite rounded-[8px] px-2 py-1.5 text-sm focus:outline-none focus:border-bronze"
           value={filters.source}
           onChange={(e) => set('source', e.target.value)}
         >
@@ -48,9 +48,9 @@ export default function JobFilters({ filters, onChange }: Props) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-zinc-500 uppercase tracking-wide">Sponsor</label>
+        <label className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">Sponsor</label>
         <select
-          className="bg-zinc-900 border border-zinc-700 text-zinc-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-600"
+          className="bg-surface border border-seam text-graphite rounded-[8px] px-2 py-1.5 text-sm focus:outline-none focus:border-bronze"
           value={filters.sponsorStatus}
           onChange={(e) => set('sponsorStatus', e.target.value)}
         >
@@ -65,9 +65,9 @@ export default function JobFilters({ filters, onChange }: Props) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-zinc-500 uppercase tracking-wide">Status</label>
+        <label className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">Status</label>
         <select
-          className="bg-zinc-900 border border-zinc-700 text-zinc-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-600"
+          className="bg-surface border border-seam text-graphite rounded-[8px] px-2 py-1.5 text-sm focus:outline-none focus:border-bronze"
           value={filters.status}
           onChange={(e) => set('status', e.target.value)}
         >
@@ -81,9 +81,9 @@ export default function JobFilters({ filters, onChange }: Props) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-zinc-500 uppercase tracking-wide">Sort</label>
+        <label className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">Sort</label>
         <select
-          className="bg-zinc-900 border border-zinc-700 text-zinc-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-600"
+          className="bg-surface border border-seam text-graphite rounded-[8px] px-2 py-1.5 text-sm focus:outline-none focus:border-bronze"
           value={filters.sort}
           onChange={(e) => set('sort', e.target.value)}
         >
@@ -94,7 +94,7 @@ export default function JobFilters({ filters, onChange }: Props) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs text-zinc-500 uppercase tracking-wide">Min Score: {filters.minScore}</label>
+        <label className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">Min Score: {filters.minScore}</label>
         <input
           type="range"
           min={0}
@@ -102,16 +102,16 @@ export default function JobFilters({ filters, onChange }: Props) {
           step={5}
           value={filters.minScore}
           onChange={(e) => set('minScore', parseInt(e.target.value, 10))}
-          className="w-32 accent-emerald-500"
+          className="w-32 accent-[#8a7a5c]"
         />
       </div>
 
       <div className="flex flex-col gap-1 flex-1 min-w-48">
-        <label className="text-xs text-zinc-500 uppercase tracking-wide">Search</label>
+        <label className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">Search</label>
         <input
           type="text"
           placeholder="Title or company..."
-          className="bg-zinc-900 border border-zinc-700 text-zinc-200 rounded-lg px-2 py-1.5 text-sm placeholder-zinc-600 focus:outline-none focus:border-emerald-600"
+          className="bg-surface border border-seam text-graphite rounded-[8px] px-2 py-1.5 text-sm placeholder-faint focus:outline-none focus:border-bronze"
           value={filters.search}
           onChange={(e) => set('search', e.target.value)}
         />
@@ -123,18 +123,18 @@ export default function JobFilters({ filters, onChange }: Props) {
             type="checkbox"
             checked={filters.hideBlocked}
             onChange={(e) => set('hideBlocked', e.target.checked)}
-            className="accent-emerald-500 w-4 h-4 rounded"
+            className="accent-[#8a7a5c] w-4 h-4 rounded"
           />
-          <span className="text-xs text-zinc-400">Hide blocked</span>
+          <span className="text-xs text-stone">Hide blocked</span>
         </label>
         <label className="flex items-center gap-2 cursor-pointer select-none">
           <input
             type="checkbox"
             checked={filters.entryOnly}
             onChange={(e) => set('entryOnly', e.target.checked)}
-            className="accent-emerald-500 w-4 h-4 rounded"
+            className="accent-[#8a7a5c] w-4 h-4 rounded"
           />
-          <span className="text-xs text-zinc-400">Entry only</span>
+          <span className="text-xs text-stone">Entry only</span>
         </label>
       </div>
     </div>

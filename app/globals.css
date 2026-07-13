@@ -1,26 +1,69 @@
 @import "tailwindcss";
 
+/*
+ * Quartz & Marble token system.
+ * Light theme, locked (no dark flip) — the page has ONE theme.
+ * Cool polished-quartz neutrals (deliberately not cream), graphite text,
+ * one deep stone-bronze accent. Radius scale 4/8/14 matches personalweb-v2.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg:             #f5f4f1;   /* polished quartz — page background */
+  --surface:        #fdfdfb;   /* white slab — standard cards */
+  --surface-raised: #ffffff;   /* elevated — modals, premium cards */
+  --surface-sunken: #edece7;   /* inset — kanban tracks, input wells */
+  --border:         #e0ddd6;   /* stone seam — visible borders */
+  --border-subtle:  #ebe9e3;   /* hairline dividers */
+  --accent:         #8a7a5c;   /* deep stone bronze — THE one accent */
+  --accent-strong:  #6f6248;   /* hover / active accent */
+  --accent-muted:   rgba(138, 122, 92, 0.08);
+  --text-primary:   #1c1a17;   /* graphite */
+  --text-secondary: #6d675e;   /* stone gray */
+  --text-muted:     #a8a196;   /* faint stone */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --shadow-card: 0 1px 3px rgba(28, 26, 23, 0.06), 0 1px 2px rgba(28, 26, 23, 0.04);
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--bg);
+  --color-foreground: var(--text-primary);
+  /* Token-mapped utility colors: bg-quartz, bg-surface, bg-raised, bg-sunken,
+     border-seam, border-hairline, text-graphite, text-stone, text-faint,
+     bg-bronze / text-bronze etc. */
+  --color-quartz:    var(--bg);
+  --color-surface:   var(--surface);
+  --color-raised:    var(--surface-raised);
+  --color-sunken:    var(--surface-sunken);
+  --color-seam:      var(--border);
+  --color-hairline:  var(--border-subtle);
+  --color-bronze:    var(--accent);
+  --color-bronze-strong: var(--accent-strong);
+  --color-graphite:  var(--text-primary);
+  --color-stone:     var(--text-secondary);
+  --color-faint:     var(--text-muted);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* Tinted card shadow — never pure black on light stone */
+.shadow-card {
+  box-shadow: var(--shadow-card);
+}
+
+/* Polished inner slab highlight (premium stat cards, PDF frame) */
+.slab-inner {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px rgba(28, 26, 23, 0.05);
 }

@@ -85,7 +85,7 @@ export default function PipelinePage() {
   const handleApprove = async (id: string) => {
     await handleStatusChange(id, 'pending');
     await fetch(`/api/applications/${id}/submit`, { method: 'POST' });
-    addToast('Queued for submission — check back in a few minutes', 'info');
+    addToast('Queued for submission. Check back in a few minutes', 'info');
   };
 
   const handleRemove = async (id: string) => {
@@ -100,18 +100,18 @@ export default function PipelinePage() {
   };
 
   return (
-    <main className="min-h-screen bg-zinc-900">
+    <main className="min-h-screen">
       <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-zinc-100">Application Pipeline</h1>
-        <p className="text-zinc-400 text-sm mt-1">{apps.length} applications total</p>
+        <h1 className="text-xl font-bold tracking-tight text-graphite">Application Pipeline</h1>
+        <p className="text-stone text-sm mt-1">{apps.length} applications total</p>
       </div>
       {loading ? (
-        <p className="text-zinc-500 text-sm">Loading...</p>
+        <p className="text-stone text-sm">Loading...</p>
       ) : error ? (
-        <p className="text-red-400 text-sm">{error}</p>
+        <p className="text-red-700 text-sm">{error}</p>
       ) : apps.length === 0 ? (
-        <p className="text-zinc-500 text-sm">No applications yet. Go to <a href="/jobs" className="text-emerald-400 underline">/jobs</a> and click Tailor on a job.</p>
+        <p className="text-stone text-sm">No applications yet. Go to <a href="/jobs" className="text-bronze-strong underline">/jobs</a> and click Tailor on a job.</p>
       ) : (
         <KanbanBoard
           applications={apps}

@@ -16,20 +16,20 @@ export default function ProfilePage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-zinc-950">
+    <main className="min-h-screen">
       <div className="max-w-3xl mx-auto px-6 py-8">
         <div className="mb-6">
-          <h1 className="text-xl font-bold text-zinc-100">Master Profile</h1>
-          <p className="text-zinc-500 text-sm mt-1">Source of truth for resume tailoring and job scoring.</p>
+          <h1 className="text-xl font-bold text-graphite">Master Profile</h1>
+          <p className="text-stone text-sm mt-1">Source of truth for resume tailoring and job scoring.</p>
         </div>
         {loading ? (
           <div className="flex flex-col gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-12 bg-zinc-900 rounded-xl animate-pulse" />
+              <div key={i} className="h-12 bg-sunken rounded-[14px] animate-pulse" />
             ))}
           </div>
         ) : error ? (
-          <div className="p-4 bg-red-950 ring-1 ring-red-800 rounded-xl text-red-400 text-sm">{error}</div>
+          <div className="p-4 bg-red-600/10 ring-1 ring-red-600/25 rounded-[14px] text-red-800 text-sm">{error}</div>
         ) : (
           <ProfileEditor initial={initial} />
         )}

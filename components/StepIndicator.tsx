@@ -1,5 +1,8 @@
 'use client';
 
+// Left-rail step indicator: mono numerals on a vertical spine (horizontal on
+// mobile). Same API as the old centered version.
+
 const STEPS = [
   { n: 1, label: 'Resume' },
   { n: 2, label: 'ATS Audit' },
@@ -13,48 +16,47 @@ interface Props {
 
 export default function StepIndicator({ current }: Props) {
   return (
-    <div className="flex items-center gap-0 w-full max-w-xl mx-auto">
+    <nav className="flex lg:flex-col gap-0 lg:gap-0" aria-label="Wizard steps">
       {STEPS.map((step, i) => {
         const done = step.n < current;
         const active = step.n === current;
         return (
-          <div key={step.n} className="flex items-center flex-1">
-            <div className="flex flex-col items-center flex-shrink-0">
+          <div key={step.n} className="flex lg:flex-col items-center lg:items-start flex-1 lg:flex-none">
+            <div className="flex items-center gap-3">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-all duration-300 ${
-                  done
-                    ? 'bg-violet-600 border-violet-600 text-white'
-                    : active
-                    ? 'bg-violet-600 border-violet-600 text-white'
-                    : 'bg-zinc-900 border-zinc-700 text-zinc-500'
+                className={`w-8 h-8 rounded-full flex items-center justify-center font-mono text-xs font-semibold border transition-all duration-300 flex-shrink-0 ${
+                  done || active
+                    ? 'bg-graphite border-bronze text-white'
+                    : 'bg-surface border-seam text-faint'
                 }`}
               >
                 {done ? (
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
                     <path d="M2 7l3.5 3.5L12 3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 ) : (
-                  step.n
+                  String(step.n).padStart(2, '0')
                 )}
               </div>
               <span
-                className={`mt-1.5 text-xs font-medium whitespace-nowrap ${
-                  active ? 'text-violet-400' : done ? 'text-zinc-400' : 'text-zinc-600'
+                className={`hidden lg:inline font-mono text-[11px] uppercase tracking-[0.14em] whitespace-nowrap ${
+                  active ? 'text-bronze-strong' : done ? 'text-stone' : 'text-faint'
                 }`}
               >
                 {step.label}
               </span>
             </div>
             {i < STEPS.length - 1 && (
-              <div
-                className={`h-0.5 flex-1 mx-2 mb-4 transition-all duration-300 ${
-                  done ? 'bg-violet-600' : 'bg-zinc-800'
-                }`}
-              />
+              <>
+                {/* horizontal connector (mobile) */}
+                <div className={`lg:hidden h-px flex-1 mx-2 transition-all duration-300 ${done ? 'bg-bronze/50' : 'bg-seam'}`} />
+                {/* vertical spine (desktop) */}
+                <div className={`hidden lg:block w-px h-8 ml-4 my-1 transition-all duration-300 ${done ? 'bg-bronze/50' : 'bg-seam'}`} />
+              </>
             )}
           </div>
         );
       })}
-    </div>
+    </nav>
   );
 }

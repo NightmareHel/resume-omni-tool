@@ -1,80 +1,63 @@
-# JobPilot Design Rules
+# JobPilot Design System — Quartz & Marble (v2)
 
-Source: derived from taste-skill (github.com/Leonxlnx/taste-skill, MIT).
+Derived with the taste-skill methodology (github.com/Leonxlnx/taste-skill).
+Design read: *data-dense job-search dashboard for a single power user; calm
+polished light quartz-and-marble language; Tailwind v4 tokens + Motion + Geist.*
+Dials: `DESIGN_VARIANCE 4 · MOTION_INTENSITY 4 · VISUAL_DENSITY 6`.
 
-## Color
+## Tokens (app/globals.css — single source)
 
-- Background scale: zinc-950 (page) / zinc-900 (surface) / zinc-800 (raised)
-- Single accent: emerald-500 for primary actions, links, active states
-- No pure black (#000) in UI. Use zinc-950 minimum. No pure white (#fff).
-- Tinted shadows: shadow-emerald-950/40 on accent elements, shadow-zinc-950/60 elsewhere
-- Destructive: red-500 / red-950 background
+| Token | Value | Use |
+|---|---|---|
+| `--bg` / `bg-quartz` | `#f5f4f1` | page background (cool quartz, never cream) |
+| `--surface` / `bg-surface` | `#fdfdfb` | standard cards |
+| `--surface-raised` / `bg-raised` | `#ffffff` | premium slabs, toasts, modals |
+| `--surface-sunken` / `bg-sunken` | `#edece7` | kanban tracks, input wells, skeletons |
+| `--border` / `border-seam` | `#e0ddd6` | visible borders |
+| `--border-subtle` / `border-hairline` | `#ebe9e3` | dividers |
+| `--accent` / `bronze` | `#8a7a5c` | THE one accent (active nav, focus, links, hero stat) |
+| `--accent-strong` / `bronze-strong` | `#6f6248` | accent hover/active text |
+| `--text-primary` / `text-graphite` | `#1c1a17` | primary text, primary buttons |
+| `--text-secondary` / `text-stone` | `#6d675e` | secondary text |
+| `--text-muted` / `text-faint` | `#a8a196` | labels, placeholders, empty states |
 
-## Typography
+**Theme lock:** light everywhere. No dark sections, no `prefers-color-scheme` flip.
+**Radius lock:** `4px` (badges/chips) · `8px` (buttons/inputs/kanban cards) · `14px` (cards/tracks) · `full` (pills/dots). Nothing else.
+**Shadows:** `shadow-card` only (tinted to bg hue). `.slab-inner` for polished insets. Never pure black.
 
-- All numbers: `tabular-nums` class always, `font-mono` for scores and counts
-- Heading scale: text-2xl / text-xl / text-lg / text-base / text-sm
-- Labels: text-xs uppercase tracking-wide text-zinc-400
-- Body: text-sm text-zinc-200
+## Semantic color maps — lib/ui.ts ONLY
 
-## Radius
+All status/badge tints live in `lib/ui.ts` (SPONSOR_BADGE, STATUS_COLORS, STATUS_DOT,
+JOB_STATUS_COLORS, SOURCE_LABELS, scoreText/scoreBadge, SEVERITY_COLORS, CLASS_COLORS,
+BTN, MONO_LABEL, EASE). **Never define a local color map in a component** — that drift
+caused the v1 badge mismatches. Tint recipe: `bg-{hue}/10 text-{hue}-800 ring-1 ring-{hue}/25`.
+These are data encoding, not decoration; bronze appears in none of them.
 
-- One radius scale: rounded-lg (cards, inputs, buttons), rounded-xl (modals, large cards), rounded-full (badges, avatars)
-- No mixing rounded-md and rounded-lg in the same component
+## Recipes
 
-## Cards
+- **Card:** `bg-surface border border-seam rounded-[14px] shadow-card` · hover `border-bronze/40`.
+- **Premium slab:** outer `bg-sunken border border-seam p-1.5 rounded-[14px]`, inner `bg-raised slab-inner rounded-[8px]`. Stat cards, PDF frame, score circle.
+- **Buttons (lib/ui BTN):** primary graphite slab (`active:scale-[0.98]`), secondary white + seam + hover bronze border, ghost stone→graphite. Focus ring bronze. Labels ≤3 words.
+- **Inputs:** `bg-surface border-seam rounded-[8px] focus:border-bronze placeholder-faint`.
+- **Mono label (signature):** `font-mono text-[11px] uppercase tracking-[0.14em] text-faint` — stat labels, kanban column heads, filter labels. Max 1 kicker per 3 sections.
+- **Numbers:** always `tabular-nums`; big stats `font-mono`; bronze only on the dashboard hero stat.
+- **Kanban:** `bg-sunken rounded-[14px] p-2` tracks, white `rounded-[8px]` cards, status = dot + mono label in column header.
+- **Skeletons:** `bg-sunken animate-pulse` shaped like the final layout. Spinner only on the PDF iframe overlay.
+- **Empty states:** icon circle + one plain sentence + optional CTA. `text-faint`.
 
-- Standard card: `bg-zinc-900 ring-1 ring-white/10 rounded-xl`
-- Premium card (double-bezel): outer `bg-white/5 ring-1 ring-white/10 p-1.5 rounded-xl`, inner `bg-zinc-900/80 ring-1 ring-white/5 rounded-lg`
-- Use double-bezel for: PDF iframe frame, dashboard stat cards, featured items
-- Tinted inner glow on hover: `hover:ring-white/20 transition-all`
+## Motion
 
-## Spacing
+`motion/react` only. Shared ease `EASE = [0.16, 1, 0.3, 1]` (lib/ui.ts). Motivated motion only:
+kanban `layoutId` springs (stiffness 400, damping 35), navbar `layoutId="nav-underline"` slide,
+`active:scale-[0.98]` taps, dashboard marble-vein canvas (MarbleBackground — dashboard ONLY,
+static under `useReducedMotion`). No scroll hijacks, no infinite loops, no GSAP.
 
-- Section gap: gap-8 or gap-10 between major sections
-- Card internal padding: p-4 (standard), p-6 (large)
-- Inline chip gap: gap-1.5 or gap-2
+## Hard rules (pre-flight)
 
-## Buttons
-
-- Primary: `bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg transition-colors`
-- Secondary: `bg-zinc-700 hover:bg-zinc-600 text-zinc-200 rounded-lg transition-colors`
-- Ghost: `text-zinc-400 hover:text-zinc-100 transition-colors`
-- Focus ring: `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500`
-- Disabled: `disabled:opacity-50 disabled:cursor-not-allowed`
-
-## Loaders
-
-- Skeleton loaders shaped like the final layout (not spinners)
-- Use `animate-pulse bg-zinc-800 rounded` blocks matching content dimensions
-- Never show a spinner for a layout that has known shape
-
-## Empty States
-
-- Composed: icon + heading + action button
-- Use zinc-700 for empty state icons, zinc-500 for text
-- Always offer a primary action (e.g., "Import a job", "Fill your profile")
-
-## Animation
-
-- Motion library (motion npm package) for layout animations
-- Only animate `transform` and `opacity` — never layout properties directly
-- Easing: `cubic-bezier(0.16, 1, 0.3, 1)` (spring-like, fast settle)
-- Stagger: 60-80ms between list items
-- `layoutId` on kanban cards for position-change animations
-- Duration: 200-300ms max. No slow animations.
-
-## Sponsorship Display
-
-- confirmed / likely: emerald badge `bg-emerald-950 text-emerald-400 ring-1 ring-emerald-800`
-- possible: yellow `bg-yellow-950 text-yellow-400 ring-1 ring-yellow-800`
-- unknown: zinc `bg-zinc-800 text-zinc-400`
-- unlikely: orange `bg-orange-950 text-orange-400 ring-1 ring-orange-800`
-- blocked: red `bg-red-950 text-red-400 ring-1 ring-red-800`
-- Always show `sponsor_evidence` in the title attribute (tooltip)
-
-## Accessibility
-
-- WCAG AA contrast on all text against its background
-- Focus rings on all interactive elements
-- No color-only information (pair color with text/icon)
+1. Zero `zinc-*`, `emerald-*`, `violet-*` classes (grep before ship).
+2. No em-dashes in UI copy.
+3. No local color maps in components.
+4. Only the 4/8/14/full radius scale.
+5. Contrast AA: graphite-on-white and all `-800` tint text pass; verify anything new.
+6. `npx tsc --noEmit` clean.
+7. Functional changes never ride along with design changes.

@@ -20,13 +20,13 @@ When asked to redesign, restyle, or apply a consistent design system to an exist
 - One radius scale. No mixing rounded-md and rounded-xl in the same component.
 - All numbers use tabular-nums. Scores, counts, dates all get `font-mono tabular-nums`.
 - Skeleton loaders shaped like final layout — never a spinner for a known-shape component.
-- No pure black or pure white. zinc-950 / zinc-50 at extremes.
+- No pure black. Quartz & Marble tokens only (see docs/DESIGN-RULES.md): bg-quartz page, bg-surface cards, graphite text, bronze accent.
 - Emerald accent only. No introducing new accent colors.
 - Animations: transform/opacity only via Motion. cubic-bezier(0.16,1,0.3,1), 200-300ms max.
 - Double-bezel card recipe for premium surfaces:
   ```
   outer: bg-white/5 ring-1 ring-white/10 p-1.5 rounded-xl
-  inner: bg-zinc-900/80 ring-1 ring-white/5 rounded-lg
+  inner: bg-raised slab-inner rounded-[8px]  (premium slab: outer bg-sunken border-seam p-1.5 rounded-[14px])
   ```
 
 ## Commit format

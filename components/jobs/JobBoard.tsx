@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import JobCard from './JobCard';
+import JobRow from './JobRow';
 import JobFilters, { type JobFiltersState } from './JobFilters';
 import { useToast } from '@/lib/toast';
+import { tailorJob } from '@/lib/tailor-client';
+import { BTN } from '@/lib/ui';
 
 interface Job {
   id: string;
@@ -38,6 +40,8 @@ export default function JobBoard({ onTailor }: Props) {
   const [scoringId, setScoringId] = useState<string | null>(null);
   const [tailoringId, setTailoringId] = useState<string | null>(null);
   const [tailorLabel, setTailorLabel] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [batch, setBatch] = useState<{ done: number; total: number; label: string } | null>(null);
   const FILTER_DEFAULTS: JobFiltersState = { source: '', status: '', minScore: 0, search: '', sort: 'scraped_at', hideBlocked: false, entryOnly: false, sponsorStatus: '' };
 
   const [filters, setFilters] = useState<JobFiltersState>(() => {
@@ -89,7 +93,7 @@ export default function JobBoard({ onTailor }: Props) {
         const s = await fetch('/api/scrape').then((r) => r.json());
         if (s.latest && s.latest.status !== 'running') {
           const found = s.latest.jobs_found ?? 0;
-          addToast(`Scrape complete — ${found} new job${found === 1 ? '' : 's'} found`, 'success');
+          addToast(`Scrape complete: ${found} new job${found === 1 ? '' : 's'} found`, 'success');
           break;
         }
       }
@@ -148,7 +152,7 @@ export default function JobBoard({ onTailor }: Props) {
   };
 
   const handleTailorInternal = async (id: string) => {
-    if (!onTailor) return;
+    if (!onTailor || batch) return;
     setTailoringId(id);
     setTailorLabel(null);
     await onTailor(id, setTailorLabel);
@@ -156,41 +160,108 @@ export default function JobBoard({ onTailor }: Props) {
     setTailorLabel(null);
   };
 
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBatchTailor = async () => {
+    // Preserve board order; serial so each job's 3 parallel AI calls don't stack into 429s
+    const queue = jobs.filter((j) => selected.has(j.id));
+    if (queue.length === 0 || batch) return;
+    const failures: string[] = [];
+    for (let i = 0; i < queue.length; i++) {
+      const job = queue[i];
+      const progress = (label: string) => setBatch({ done: i, total: queue.length, label: `${job.company}: ${label}` });
+      setBatch({ done: i, total: queue.length, label: job.company });
+      let result = await tailorJob(job.id, progress);
+      if (!result.ok && (result.status === 429 || /rate.?limit/i.test(result.error))) {
+        setBatch({ done: i, total: queue.length, label: `${job.company}: rate limited, retrying in 30s` });
+        await new Promise((r) => setTimeout(r, 30000));
+        result = await tailorJob(job.id, progress);
+      }
+      if (result.ok) {
+        setSelected((prev) => { const next = new Set(prev); next.delete(job.id); return next; });
+      } else {
+        failures.push(`${job.company}: ${result.error}`);
+      }
+    }
+    setBatch(null);
+    const okCount = queue.length - failures.length;
+    if (failures.length === 0) {
+      addToast(`Tailored ${okCount} job${okCount === 1 ? '' : 's'}. Drafts are in the pipeline.`, 'success');
+    } else {
+      addToast(`Tailored ${okCount} of ${queue.length}. Failed: ${failures.join('; ')}`, 'error');
+    }
+  };
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-zinc-100">Job Board</h1>
-          <p className="text-zinc-400 text-sm">{total} jobs in database</p>
+          <h1 className="text-xl font-bold tracking-tight text-graphite">Job Board</h1>
+          <p className="text-stone text-sm">{total} jobs in database</p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={handleScoreAll}
             disabled={!!scoringId || loading}
-            className="bg-zinc-700 hover:bg-zinc-600 text-zinc-200 text-sm px-4 py-2 rounded-lg disabled:opacity-50"
+            className="bg-surface border border-seam text-graphite hover:border-bronze rounded-[8px] transition-colors text-sm px-4 py-2 disabled:opacity-50"
           >
             {scoringId ? 'Scoring...' : 'Score All'}
           </button>
           <button
             onClick={handleScrape}
             disabled={scraping}
-            className="bg-zinc-700 hover:bg-zinc-600 text-zinc-100 text-sm px-4 py-2 rounded-lg disabled:opacity-50"
+            className="bg-surface border border-seam text-graphite hover:border-bronze rounded-[8px] transition-colors text-sm px-4 py-2 disabled:opacity-50"
           >
             {scraping ? 'Scraping...' : 'Scrape Now'}
           </button>
         </div>
       </div>
 
-      <JobFilters filters={filters} onChange={handleFiltersChange} />
+      {/* Sticky filter bar: stays pinned under the navbar while the queue scrolls */}
+      <div className="sticky top-14 z-20 bg-quartz/90 backdrop-blur-md -mx-6 px-6 py-3 border-b border-hairline">
+        <JobFilters filters={filters} onChange={handleFiltersChange} />
+        {(selected.size > 0 || batch) && (
+          <div className="flex items-center gap-3 mt-2.5">
+            {batch ? (
+              <span className="text-xs text-stone tabular-nums">
+                Tailoring {batch.done + 1}/{batch.total}: {batch.label}
+              </span>
+            ) : (
+              <>
+                <button
+                  onClick={handleBatchTailor}
+                  disabled={!!tailoringId}
+                  className={`text-xs px-3 py-1.5 disabled:opacity-50 ${BTN.primary}`}
+                >
+                  Tailor {selected.size} selected
+                </button>
+                <button onClick={() => setSelected(new Set())} className={`text-xs px-2 py-1.5 ${BTN.ghost}`}>
+                  Clear
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
 
       {loading ? (
-        <p className="text-zinc-500 text-sm">Loading...</p>
+        <div className="flex flex-col gap-2">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="h-14 bg-sunken rounded-[8px] animate-pulse" />
+          ))}
+        </div>
       ) : jobs.length === 0 ? (
-        <p className="text-zinc-500 text-sm">No jobs found. Try scraping or adjusting filters.</p>
+        <p className="text-stone text-sm py-8 text-center">No jobs found. Try scraping or adjusting filters.</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="flex flex-col gap-2">
           {jobs.map((job) => (
-            <JobCard
+            <JobRow
               key={job.id}
               job={job}
               onStatusChange={handleStatusChange}
@@ -199,6 +270,8 @@ export default function JobBoard({ onTailor }: Props) {
               scoring={scoringId === job.id}
               tailoring={tailoringId === job.id}
               tailoringLabel={tailoringId === job.id ? tailorLabel ?? undefined : undefined}
+              selected={selected.has(job.id)}
+              onSelectToggle={toggleSelect}
             />
           ))}
         </div>

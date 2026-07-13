@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import JobCard from './JobCard';
+import JobRow from './JobRow';
 import { useToast } from '@/lib/toast';
+import { MONO_LABEL } from '@/lib/ui';
 
 interface Job {
   id: string;
@@ -34,6 +35,7 @@ export default function ManualJobsSection({ onTailor }: Props) {
   const [loading, setLoading] = useState(true);
   const [url, setUrl] = useState('');
   const [adding, setAdding] = useState(false);
+  const [open, setOpen] = useState(false);
   const [scoringId, setScoringId] = useState<string | null>(null);
   const [tailoringId, setTailoringId] = useState<string | null>(null);
   const [tailorLabel, setTailorLabel] = useState<string | null>(null);
@@ -110,49 +112,60 @@ export default function ManualJobsSection({ onTailor }: Props) {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-bold text-zinc-100">My Jobs</h1>
-        <p className="text-zinc-400 text-sm">{jobs.length} manually added</p>
-      </div>
-
-      <div className="flex gap-2">
-        <input
-          type="url"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter' && !adding) handleAdd(); }}
-          placeholder="Paste a job URL..."
-          disabled={adding}
-          className="flex-1 bg-zinc-800 border border-zinc-600 text-zinc-100 placeholder-zinc-500 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-zinc-400 disabled:opacity-50"
-        />
+    <div className="bg-surface border border-seam rounded-[14px] shadow-card">
+      {/* Slim strip header: label + inline add form on one line */}
+      <div className="flex items-center gap-3 px-4 py-3 flex-wrap">
         <button
-          onClick={handleAdd}
-          disabled={adding || !url.trim()}
-          className="bg-zinc-700 hover:bg-zinc-600 text-zinc-100 text-sm px-4 py-2 rounded-lg disabled:opacity-50 whitespace-nowrap"
+          onClick={() => setOpen((o) => !o)}
+          className="flex items-center gap-2 flex-shrink-0"
+          title={open ? 'Collapse' : 'Expand'}
         >
-          {adding ? 'Fetching...' : 'Add Job'}
+          <span className={`text-faint transition-transform text-xs ${open ? 'rotate-90' : ''}`}>▶</span>
+          <span className={MONO_LABEL}>My Jobs</span>
+          <span className="text-xs tabular-nums text-stone">({jobs.length})</span>
         </button>
+        <div className="flex gap-2 flex-1 min-w-64">
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !adding) handleAdd(); }}
+            placeholder="Paste a job URL to import..."
+            disabled={adding}
+            className="flex-1 bg-quartz border border-seam text-graphite placeholder-faint rounded-[8px] px-3 py-1.5 text-sm focus:outline-none focus:border-bronze disabled:opacity-50"
+          />
+          <button
+            onClick={handleAdd}
+            disabled={adding || !url.trim()}
+            className="bg-graphite text-white hover:bg-black active:scale-[0.98] rounded-[8px] transition-all text-xs px-3.5 py-1.5 disabled:opacity-50 whitespace-nowrap"
+          >
+            {adding ? 'Fetching...' : 'Add Job'}
+          </button>
+        </div>
       </div>
 
-      {loading ? (
-        <p className="text-zinc-500 text-sm">Loading...</p>
-      ) : jobs.length === 0 ? (
-        <p className="text-zinc-500 text-sm">No manual jobs yet. Paste a URL above to add one.</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {jobs.map((job) => (
-            <JobCard
-              key={job.id}
-              job={job}
-              onStatusChange={handleStatusChange}
-              onScore={handleScore}
-              onTailor={onTailor ? () => handleTailorInternal(job.id) : () => {}}
-              scoring={scoringId === job.id}
-              tailoring={tailoringId === job.id}
-              tailoringLabel={tailoringId === job.id ? tailorLabel ?? undefined : undefined}
-            />
-          ))}
+      {open && (
+        <div className="border-t border-hairline px-3 py-3">
+          {loading ? (
+            <p className="text-stone text-sm px-1">Loading...</p>
+          ) : jobs.length === 0 ? (
+            <p className="text-faint text-xs px-1">No manual jobs yet. Paste a URL above to add one.</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {jobs.map((job) => (
+                <JobRow
+                  key={job.id}
+                  job={job}
+                  onStatusChange={handleStatusChange}
+                  onScore={handleScore}
+                  onTailor={onTailor ? () => handleTailorInternal(job.id) : () => {}}
+                  scoring={scoringId === job.id}
+                  tailoring={tailoringId === job.id}
+                  tailoringLabel={tailoringId === job.id ? tailorLabel ?? undefined : undefined}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

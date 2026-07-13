@@ -19,7 +19,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="text-xs px-2.5 py-1 rounded bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 transition-colors"
+      className="text-xs px-2.5 py-1 rounded bg-sunken text-stone hover:bg-seam hover:text-graphite transition-colors"
     >
       {copied ? 'Copied' : 'Copy'}
     </button>
@@ -34,8 +34,8 @@ export default function ResumeRewriter({ result }: Props) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-xl font-semibold text-zinc-100">Claude Rewrite</h2>
-        <p className="text-sm text-zinc-400 mt-1 leading-relaxed">{result.summary}</p>
+        <h2 className="text-xl font-semibold text-graphite">Claude Rewrite</h2>
+        <p className="text-sm text-stone mt-1 leading-relaxed">{result.summary}</p>
       </div>
 
       {result.sections.length > 1 && (
@@ -46,8 +46,8 @@ export default function ResumeRewriter({ result }: Props) {
               onClick={() => setActiveSection(i)}
               className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
                 i === activeSection
-                  ? 'bg-violet-600 border-violet-600 text-white'
-                  : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-300'
+                  ? 'bg-graphite border-bronze text-white'
+                  : 'bg-surface border-seam text-stone hover:border-bronze/50 hover:text-graphite'
               }`}
             >
               {s.name}
@@ -59,34 +59,34 @@ export default function ResumeRewriter({ result }: Props) {
       {result.sections.length > 0 && (
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="p-4 rounded-lg bg-zinc-900 border border-zinc-800">
+            <div className="p-4 rounded-[8px] bg-surface border border-hairline">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Original</span>
+                <span className="text-xs font-semibold text-stone uppercase tracking-wider">Original</span>
                 <CopyButton text={result.sections[activeSection].original} />
               </div>
-              <p className="text-sm text-zinc-400 leading-relaxed whitespace-pre-wrap">
+              <p className="text-sm text-stone leading-relaxed whitespace-pre-wrap">
                 {result.sections[activeSection].original}
               </p>
             </div>
 
-            <div className="p-4 rounded-lg bg-zinc-900 border border-violet-500/30">
+            <div className="p-4 rounded-[8px] bg-surface border border-bronze/30">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold text-violet-400 uppercase tracking-wider">Rewritten</span>
+                <span className="text-xs font-semibold text-bronze-strong uppercase tracking-wider">Rewritten</span>
                 <CopyButton text={result.sections[activeSection].rewritten} />
               </div>
-              <p className="text-sm text-zinc-200 leading-relaxed whitespace-pre-wrap">
+              <p className="text-sm text-graphite leading-relaxed whitespace-pre-wrap">
                 {result.sections[activeSection].rewritten}
               </p>
             </div>
           </div>
 
           {result.sections[activeSection].changes.length > 0 && (
-            <div className="p-3.5 rounded-lg bg-zinc-900 border border-zinc-800">
-              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Changes Made</span>
+            <div className="p-3.5 rounded-[8px] bg-surface border border-hairline">
+              <span className="text-xs font-semibold text-stone uppercase tracking-wider">Changes Made</span>
               <ul className="mt-2 flex flex-col gap-1">
                 {result.sections[activeSection].changes.map((c, i) => (
-                  <li key={i} className="text-xs text-zinc-400 flex gap-2">
-                    <span className="text-violet-500 flex-shrink-0">•</span>
+                  <li key={i} className="text-xs text-stone flex gap-2">
+                    <span className="text-bronze flex-shrink-0">•</span>
                     {c}
                   </li>
                 ))}
@@ -96,12 +96,12 @@ export default function ResumeRewriter({ result }: Props) {
         </div>
       )}
 
-      <div className="p-4 rounded-lg bg-zinc-900 border border-zinc-800">
+      <div className="p-4 rounded-[8px] bg-surface border border-hairline">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Full Rewritten Resume</span>
+          <span className="text-xs font-semibold text-stone uppercase tracking-wider">Full Rewritten Resume</span>
           <CopyButton text={allRewritten} />
         </div>
-        <pre className="text-xs text-zinc-400 leading-relaxed whitespace-pre-wrap font-mono overflow-auto max-h-80">
+        <pre className="text-xs text-stone leading-relaxed whitespace-pre-wrap font-mono overflow-auto max-h-80">
           {allRewritten}
         </pre>
       </div>

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
-import { jobs, applications } from '@/lib/schema';
-import { eq, isNull, lt, and, gte, ne } from 'drizzle-orm';
+import { jobs, applications, email_threads } from '@/lib/schema';
+import { eq, isNull, isNotNull, lt, and, or, gte, ne, desc, asc, notInArray, inArray } from 'drizzle-orm';
 
 export async function GET() {
   const db = getDb();
@@ -94,6 +94,42 @@ export async function GET() {
     .where(and(isNull(jobs.fit_score), ne(jobs.sponsor_status, 'blocked')))
     .limit(5);
 
+  // Best scored, sponsor-friendly, entry-level jobs with no application yet
+  const appliedJobIds = db.select({ job_id: applications.job_id }).from(applications);
+  const todaysTargets = await db
+    .select({ id: jobs.id, title: jobs.title, company: jobs.company, url: jobs.url, fit_score: jobs.fit_score, fit_grade: jobs.fit_grade, sponsor_status: jobs.sponsor_status })
+    .from(jobs)
+    .where(and(
+      isNotNull(jobs.fit_score),
+      or(isNull(jobs.sponsor_status), notInArray(jobs.sponsor_status, ['blocked', 'unlikely'])),
+      or(isNull(jobs.entry_level), ne(jobs.entry_level, 0)),
+      notInArray(jobs.id, appliedJobIds),
+    ))
+    .orderBy(desc(jobs.fit_score))
+    .limit(5);
+
+  // Submitted 7+ days ago with no classified reply thread
+  const sevenDaysAgo = new Date(Date.now() - 7 * DAY).toISOString();
+  const repliedAppIds = db
+    .select({ application_id: email_threads.application_id })
+    .from(email_threads)
+    .where(and(
+      isNotNull(email_threads.application_id),
+      inArray(email_threads.classification, ['reply', 'interview', 'offer', 'rejection']),
+    ));
+  const awaitingReply = await db
+    .select({ id: applications.id, applied_at: applications.applied_at, title: jobs.title, company: jobs.company })
+    .from(applications)
+    .innerJoin(jobs, eq(applications.job_id, jobs.id))
+    .where(and(
+      eq(applications.status, 'submitted'),
+      isNotNull(applications.applied_at),
+      lt(applications.applied_at, sevenDaysAgo),
+      notInArray(applications.id, repliedAppIds),
+    ))
+    .orderBy(asc(applications.applied_at))
+    .limit(5);
+
   return NextResponse.json({
     totalJobs: allJobs.length,
     sponsorBreakdown,
@@ -109,6 +145,6 @@ export async function GET() {
       responseRate,
       avgDaysToSubmit,
     },
-    actionQueue: { manualRequired, staleDrafts, topUnscored },
+    actionQueue: { todaysTargets, manualRequired, staleDrafts, awaitingReply, topUnscored },
   });
 }
